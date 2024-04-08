@@ -31,7 +31,7 @@ if __name__ == "__main__":
         prompt = sys.argv[1]
         ssid = sys.argv[2]
         set_cookies(".google.com", {
-        "__Secure-1PSID": "cookie value"
+        "__Secure-1PSID": ssid
         })
         generate_and_download_image(prompt)
     else:
