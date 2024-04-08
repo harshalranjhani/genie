@@ -4,7 +4,6 @@ import requests
 from g4f.cookies import set_cookies
 
 def download_image(image_url, prompt):
-    # Create a filename based on the prompt (sanitize if necessary)
     filename = prompt.replace(" ", "_") + ".jpg"
     response = requests.get(image_url)
     if response.status_code == 200:
@@ -13,8 +12,6 @@ def download_image(image_url, prompt):
     return filename
 
 def generate_and_download_image(prompt):
-    # Your existing code to generate the image URL
-    # For example, let's say image_url is the result
     client = Client()
     response = client.images.generate(
     model="gemini",
@@ -22,7 +19,6 @@ def generate_and_download_image(prompt):
     )
     image_url = response.data[0].url
     
-    # Download the image and get the filename
     filename = download_image(image_url, prompt)
     print(filename)
 
