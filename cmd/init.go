@@ -16,6 +16,7 @@ func init() {
 const serviceName = "genie"
 const openAIKeyName = "openai_api_key"
 const geminiKeyName = "gemini_api_key"
+const ssidKeyName = "ssid"
 
 func getAPIKeyFromUser(promptMessage string) string {
 	fmt.Println(promptMessage)
@@ -61,10 +62,13 @@ var initCmd = &cobra.Command{
 
 		geminiKey := storeKeyIfNotPresent(geminiKeyName, "Enter your Gemini API Key:")
 
+		ssidKey := storeKeyIfNotPresent(ssidKeyName, "Enter your SSID:")
+
 		// Use the API keys for your application's logic
 		fmt.Println("API Keys are securely stored and ready for use.")
 
 		fmt.Println("OpenAI API Key:", openAIKey)
 		fmt.Println("Gemini API Key:", geminiKey)
+		fmt.Println("SSID:", ssidKey)
 	},
 }
