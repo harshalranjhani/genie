@@ -4,7 +4,9 @@ go 1.21.3
 
 require (
 	github.com/google/generative-ai-go v0.10.0
+	github.com/joho/godotenv v1.5.1
 	github.com/spf13/cobra v1.8.0
+	github.com/zalando/go-keyring v0.2.4
 	google.golang.org/api v0.149.0
 )
 
@@ -23,9 +25,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/zalando/go-keyring v0.2.4 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
