@@ -27,12 +27,15 @@ def generate_and_download_image(prompt):
     print(filename)
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        prompt = sys.argv[1]
-        ssid = sys.argv[2]
-        set_cookies(".google.com", {
-        "__Secure-1PSID": ssid
-        })
-        generate_and_download_image(prompt)
-    else:
-        print("Please provide a prompt.")
+    try:
+        if len(sys.argv) > 1:
+            prompt = sys.argv[1]
+            ssid = sys.argv[2]
+            set_cookies(".google.com", {
+            "__Secure-1PSID": ssid
+            })
+            generate_and_download_image(prompt)
+        else:
+            print("Please provide a prompt.")
+    except Exception as e:
+        print("An error occurred:", e)
