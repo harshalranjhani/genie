@@ -26,14 +26,11 @@ func getAPIKeyFromUser(promptMessage string) string {
 }
 
 func storeKeyIfNotPresent(accountName string, promptMessage string) string {
-	// Try to get the API key from keyring
 	apiKey, err := keyring.Get(serviceName, accountName)
 
 	if err != nil {
-		// If API key is not found, prompt the user
 		apiKey = getAPIKeyFromUser(promptMessage)
 
-		// Store the API key securely
 		err := keyring.Set(serviceName, accountName, apiKey)
 		if err != nil {
 			fmt.Printf("Failed to store %s: %s\n", accountName, err)
@@ -50,7 +47,6 @@ var initCmd = &cobra.Command{
 	Long:  `store your API keys securely in the system keychain.`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// check if the API keys are already stored
 		_, err := keyring.Get(serviceName, openAIKeyName)
 		_, err2 := keyring.Get(serviceName, geminiKeyName)
 		if err == nil || err2 == nil {
@@ -64,7 +60,6 @@ var initCmd = &cobra.Command{
 
 		ssidKey := storeKeyIfNotPresent(ssidKeyName, "Enter your SSID:")
 
-		// Use the API keys for your application's logic
 		fmt.Println("API Keys are securely stored and ready for use.")
 
 		fmt.Println("OpenAI API Key:", openAIKey)

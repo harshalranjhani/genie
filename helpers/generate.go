@@ -29,9 +29,7 @@ func GenerateImage(prompt string) (string, error) {
 		return "", fmt.Errorf("failed to execute python script: %w", err)
 	}
 
-	// The output of your Python script is now in out.String(), which is the filename
-	filename := out.String() // Make sure to trim or process this as needed
+	filename := out.String()
 
-	// Return the filename (or process as needed)
 	return filename, nil
 }
