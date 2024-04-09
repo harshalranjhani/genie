@@ -27,6 +27,12 @@ func resetKeys() {
 	} else {
 		fmt.Printf("%s has been deleted.\n", ssidKeyName)
 	}
+
+	if err := keyring.Delete(serviceName, ignoreListPathKeyName); err != nil {
+		fmt.Printf("Failed to delete %s: %s\n", ssidKeyName, err)
+	} else {
+		fmt.Printf("%s has been deleted.\n", ssidKeyName)
+	}
 }
 
 func init() {
@@ -45,7 +51,6 @@ var resetCmd = &cobra.Command{
 
 		if userResponse == "yes" {
 			resetKeys()
-			return
 		}
 
 		_ = storeKeyIfNotPresent(openAIKeyName, "Enter your OpenAI API Key:")
@@ -53,6 +58,8 @@ var resetCmd = &cobra.Command{
 		_ = storeKeyIfNotPresent(geminiKeyName, "Enter your Gemini API Key:")
 
 		_ = storeKeyIfNotPresent(ssidKeyName, "Enter your SSID:")
+
+		_ = storeKeyIfNotPresent(ignoreListPathKeyName, "Enter the path to the ignore list file:")
 
 		fmt.Println("API Keys are securely stored and ready for use.")
 	},

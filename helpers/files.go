@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -9,14 +10,30 @@ import (
 	"strings"
 
 	"github.com/harshalranjhani/genie/structs"
+	"github.com/zalando/go-keyring"
 )
 
 func GetCurrentDirectoriesAndFiles(root string) (structs.Directory, error) {
 	rootDir := structs.Directory{Name: root}
+	ignoreListPath, err := keyring.Get("genie", "ignore_list_path")
+	if err != nil {
+		return structs.Directory{}, fmt.Errorf("error getting ignore list path: %w", err)
+	}
+	fmt.Println("Ignore List Path: ", ignoreListPath)
+	ignorePatterns, err := readIgnorePatterns(ignoreListPath)
+	if err != nil {
+		return structs.Directory{}, fmt.Errorf("error reading ignore patterns: %w", err)
+	}
 
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
+		}
+		if shouldIgnore(path, ignorePatterns) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 		relativePath, _ := filepath.Rel(root, path)
 		if info.IsDir() {
@@ -37,6 +54,39 @@ func GetCurrentDirectoriesAndFiles(root string) (structs.Directory, error) {
 	}
 
 	return rootDir, nil
+}
+
+func readIgnorePatterns(filename string) ([]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var patterns []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		patterns = append(patterns, scanner.Text())
+	}
+	return patterns, scanner.Err()
+}
+
+func shouldIgnore(path string, patterns []string) bool {
+	for _, pattern := range patterns {
+		matched, err := filepath.Match(pattern, filepath.Base(path))
+		if err != nil {
+			log.Printf("Invalid pattern %q: %v", pattern, err)
+			continue
+		}
+		if matched {
+			return true
+		}
+	}
+	// Additional check to ignore hidden files/folders.
+	if strings.HasPrefix(filepath.Base(path), ".") {
+		return true
+	}
+	return false
 }
 
 func PrintData(sb *strings.Builder, root structs.Directory, level int) {
