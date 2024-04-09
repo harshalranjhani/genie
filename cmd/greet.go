@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/fatih/color"
 	"github.com/harshalranjhani/genie/helpers"
 	"github.com/harshalranjhani/genie/structs"
 	"github.com/spf13/cobra"
@@ -42,8 +43,9 @@ var greetCmd = &cobra.Command{
 		}
 
 		if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
+			c := color.New(color.FgRed)
 			generatedText := genResp.Candidates[0].Content.Parts[0]
-			fmt.Println(generatedText)
+			c.Println(generatedText)
 		} else {
 			fmt.Println("No generated text found")
 		}

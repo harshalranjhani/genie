@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/harshalranjhani/genie/structs"
 	"github.com/zalando/go-keyring"
 )
@@ -19,7 +20,8 @@ func GetCurrentDirectoriesAndFiles(root string) (structs.Directory, error) {
 	if err != nil {
 		return structs.Directory{}, fmt.Errorf("error getting ignore list path: %w", err)
 	}
-	fmt.Println("Ignore List Path: ", ignoreListPath)
+	c := color.New(color.FgCyan).Add(color.Underline)
+	c.Println("Ignore List Path: ", ignoreListPath)
 	ignorePatterns, err := readIgnorePatterns(ignoreListPath)
 	if err != nil {
 		return structs.Directory{}, fmt.Errorf("error reading ignore patterns: %w", err)
