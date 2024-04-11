@@ -16,4 +16,4 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_TRIGGER_TOKEN }}
           repository: harshalranjhani/genie-web
-          event-type: new-release-triggered
+          event-type: trigger-workflow-event
