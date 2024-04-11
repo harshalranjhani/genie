@@ -3,6 +3,7 @@ module github.com/harshalranjhani/genie
 go 1.21.3
 
 require (
+	github.com/fatih/color v1.16.0
 	github.com/google/generative-ai-go v0.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/spf13/cobra v1.8.0
@@ -18,7 +19,6 @@ require (
 	cloud.google.com/go/longrunning v0.5.2 // indirect
 	github.com/alessio/shellescape v1.4.2 // indirect
 	github.com/danieljoos/wincred v1.2.1 // indirect
-	github.com/fatih/color v1.16.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
