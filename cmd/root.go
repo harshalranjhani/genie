@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"os"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
@@ -17,6 +20,25 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
+	rootCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		funcMap := template.FuncMap{
+			"rpad":                    rightPad,
+			"trimTrailingWhitespaces": trimTrailingWhitespaces,
+		}
+		tmpl, err := template.New("help").Funcs(funcMap).Parse(helpTemplate)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		var out bytes.Buffer
+		err = tmpl.Execute(&out, cmd)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Print(out.String())
+		color.Cyan("Additionally, you can visit https://genie.harshalranjhani.in/setup for a detailed setup guide.")
+	})
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
