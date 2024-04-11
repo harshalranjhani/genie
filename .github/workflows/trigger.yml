@@ -11,6 +11,10 @@ jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
+      - name: Delay
+        run: |
+          echo "Waiting for 10 minutes..."
+          sleep 600 # Sleep for 600 seconds or 10 minutes
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v1
         with:
