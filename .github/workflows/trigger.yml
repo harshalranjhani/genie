@@ -3,6 +3,9 @@ name: Trigger Remote Workflow on Release
 on:
   release:
     types: [created]
+  push:
+    branches:
+      - main
 
 jobs:
   trigger:
