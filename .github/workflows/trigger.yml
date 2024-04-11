@@ -1,9 +1,8 @@
-name: Trigger Remote Workflow
+name: Trigger Remote Workflow on Release
 
 on:
-  push:
-    branches:
-      - main  # Or any branch you want to trigger the workflow on
+  release:
+    types: [created]
 
 jobs:
   trigger:
@@ -14,4 +13,4 @@ jobs:
         with:
           token: ${{ secrets.WORKFLOW_TRIGGER_TOKEN }}
           repository: harshalranjhani/genie-web
-          event-type: trigger-workflow-event
+          event-type: new-release-triggered
