@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/assets"
 	"github.com/spf13/cobra"
 )
 
@@ -36,6 +37,7 @@ func Execute() {
 			fmt.Println(err)
 			return
 		}
+		assets.PrintTextFileContents(assets.TextFilePath)
 		fmt.Print(out.String())
 		color.Cyan("Additionally, you can visit https://genie.harshalranjhani.in/setup for a detailed setup guide.")
 	})
