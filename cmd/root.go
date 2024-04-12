@@ -37,7 +37,7 @@ func Execute() {
 			fmt.Println(err)
 			return
 		}
-		assets.PrintTextFileContents(assets.TextFilePath)
+		assets.PrintAscii()
 		fmt.Print(out.String())
 		color.Cyan("Additionally, you can visit https://genie.harshalranjhani.in/setup for a detailed setup guide.")
 	})
