@@ -18,6 +18,7 @@ const openAIKeyName = "openai_api_key"
 const geminiKeyName = "gemini_api_key"
 const ssidKeyName = "ssid"
 const ignoreListPathKeyName = "ignore_list_path"
+const replicateKeyName = "replicate_api_key"
 
 func getAPIKeyFromUser(promptMessage string) string {
 	fmt.Println(promptMessage)
@@ -65,11 +66,14 @@ var initCmd = &cobra.Command{
 
 		ignoreListPath := storeKeyIfNotPresent(ignoreListPathKeyName, "Enter the path to your ignore list file:")
 
+		replicateKey := storeKeyIfNotPresent(replicateKeyName, "Enter your Replicate API Key:")
+
 		fmt.Println("API Keys are securely stored and ready for use.")
 
 		fmt.Println("OpenAI API Key:", openAIKey)
 		fmt.Println("Gemini API Key:", geminiKey)
 		fmt.Println("SSID:", ssidKey)
 		fmt.Println("Ignore List Path:", ignoreListPath)
+		fmt.Println("Replicate API Key:", replicateKey)
 	},
 }

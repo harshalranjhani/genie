@@ -33,6 +33,12 @@ func resetKeys() {
 	} else {
 		fmt.Printf("%s has been deleted.\n", ssidKeyName)
 	}
+
+	if err := keyring.Delete(serviceName, replicateKeyName); err != nil {
+		fmt.Printf("Failed to delete %s: %s\n", replicateKeyName, err)
+	} else {
+		fmt.Printf("%s has been deleted.\n", replicateKeyName)
+	}
 }
 
 func init() {
@@ -60,6 +66,8 @@ var resetCmd = &cobra.Command{
 		_ = storeKeyIfNotPresent(ssidKeyName, "Enter your SSID:")
 
 		_ = storeKeyIfNotPresent(ignoreListPathKeyName, "Enter the path to the ignore list file:")
+
+		_ = storeKeyIfNotPresent(replicateKeyName, "Enter your Replicate API Key:")
 
 		fmt.Println("API Keys are securely stored and ready for use.")
 	},
