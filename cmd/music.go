@@ -119,9 +119,8 @@ var musicCmd = &cobra.Command{
 			json.Unmarshal(body, &response)
 			resp.Body.Close()
 
-			fmt.Println("Raw json", string(body))
-			fmt.Println("Current status:", response.Status)
 			if len(response.Logs) > 0 && showLogs {
+				fmt.Println("Current status:", response.Status)
 				fmt.Println(response.Logs)
 			}
 
