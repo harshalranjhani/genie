@@ -12,7 +12,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-func GetResponse(prompt string) (*genai.GenerateContentResponse, error) {
+func GetResponse(prompt string, safeOn bool) (*genai.GenerateContentResponse, error) {
 	godotenv.Load()
 	ctx := context.Background()
 
@@ -28,6 +28,33 @@ func GetResponse(prompt string) (*genai.GenerateContentResponse, error) {
 	defer client.Close()
 	// For text-only input, use the gemini-pro model
 	model := client.GenerativeModel("gemini-pro")
+	if safeOn {
+		model.SafetySettings = []*genai.SafetySetting{
+			{
+				Category:  genai.HarmCategoryHarassment,
+				Threshold: genai.HarmBlockLowAndAbove,
+			},
+			{
+				Category:  genai.HarmCategoryDangerousContent,
+				Threshold: genai.HarmBlockLowAndAbove,
+			},
+			{
+				Category:  genai.HarmCategorySexuallyExplicit,
+				Threshold: genai.HarmBlockLowAndAbove,
+			},
+			{
+				Category:  genai.HarmCategoryHateSpeech,
+				Threshold: genai.HarmBlockLowAndAbove,
+			},
+		}
+	} else {
+		model.SafetySettings = []*genai.SafetySetting{
+			{
+				Category:  genai.HarmCategoryDangerousContent,
+				Threshold: genai.HarmBlockNone,
+			},
+		}
+	}
 	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
 	return resp, err
 }

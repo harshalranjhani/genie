@@ -26,7 +26,7 @@ var tellCmd = &cobra.Command{
 
 		var prompt string = fmt.Sprintf("Context: You are an intelligent CLI tool named Genie, designed to understand and execute file system operations based on the current state of the user's directory and explicit instructions provided. Please provide assistance strictly related to command-line interface (CLI) issues and queries within UNIX or any other shell environment. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics.\nHere's what the user is asking %s", args[0])
 
-		resp, err := helpers.GetResponse(prompt)
+		resp, err := helpers.GetResponse(prompt, true)
 		if err != nil {
 			log.Fatal(err)
 		}
