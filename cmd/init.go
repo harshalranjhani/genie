@@ -3,6 +3,7 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"github.com/harshalranjhani/genie/helpers"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -62,7 +63,19 @@ var initCmd = &cobra.Command{
 
 		geminiKey := storeKeyIfNotPresent(geminiKeyName, "Enter your Gemini API Key:")
 
-		ssidKey := storeKeyIfNotPresent(ssidKeyName, "Enter your SSID:")
+		ssidKey, err := helpers.GetSSID()
+		if err != nil {
+			fmt.Printf("Failed to get SSID for %s: %s\n", serviceName, err)
+			ssidKey = getAPIKeyFromUser("Enter your SSID:")
+		} else {
+			prompt := fmt.Sprintf("Detected SSID: %s. Do you want to use this? (yes/no):", ssidKey)
+			response := getAPIKeyFromUser(prompt)
+
+			if response != "yes" {
+				ssidKey = getAPIKeyFromUser("Enter your SSID:")
+			}
+		}
+		storeKeyIfNotPresent(ssidKeyName, ssidKey)
 
 		ignoreListPath := storeKeyIfNotPresent(ignoreListPathKeyName, "Enter the path to your ignore list file:")
 
