@@ -3,7 +3,6 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"github.com/harshalranjhani/genie/helpers"
 	"os"
 	"strconv"
 
@@ -101,20 +100,7 @@ var resetCmd = &cobra.Command{
 			case geminiKeyName:
 				prompt = "Enter your Gemini API Key:"
 			case ssidKeyName:
-				ssidKey, err := helpers.GetSSID()
-				if err != nil {
-					fmt.Printf("Failed to get SSID for %s: %s\n", serviceName, err)
-					ssidKey = getAPIKeyFromUser("Enter your SSID:")
-				} else {
-					fmt.Printf("Detected SSID: %s. Do you want to use this? (yes/no):", ssidKey)
-					scanner.Scan()
-					response := scanner.Text()
-					if response != "yes" {
-						ssidKey = getAPIKeyFromUser("Enter your SSID:")
-					}
-				}
-				storeKeyIfNotPresent(ssidKeyName, ssidKey)
-				continue // Skip the regular prompt flow for SSID
+				prompt = "Enter the SSID key:"
 			case ignoreListPathKeyName:
 				prompt = "Enter the path to the ignore list file:"
 			case replicateKeyName:
