@@ -4,11 +4,27 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
 
+var keys = map[int]string{
+	1: openAIKeyName,
+	2: geminiKeyName,
+	3: ssidKeyName,
+	4: ignoreListPathKeyName,
+	5: replicateKeyName,
+}
+
+func resetKey(keyName string) {
+	if err := keyring.Delete(serviceName, keyName); err != nil {
+		fmt.Printf("Failed to delete %s: %s\n", keyName, err)
+	} else {
+		fmt.Printf("%s has been deleted.\n", keyName)
+	}
+}
 func resetKeys() {
 	if err := keyring.Delete(serviceName, openAIKeyName); err != nil {
 		fmt.Printf("Failed to delete %s: %s\n", openAIKeyName, err)
@@ -50,25 +66,53 @@ var resetCmd = &cobra.Command{
 	Short: "Reset your API keys.",
 	Long:  `Reset your API keys.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Do you want to reset the stored keys? (yes/no)")
 		scanner := bufio.NewScanner(os.Stdin)
-		scanner.Scan()
-		userResponse := scanner.Text()
+		for {
+			fmt.Println("\n--- API Key Reset Menu ---")
+			fmt.Println("Please select an option:")
+			fmt.Println("1: Reset OpenAI API Key")
+			fmt.Println("2: Reset Gemini API Key")
+			fmt.Println("3: Reset SSID")
+			fmt.Println("4: Reset Ignore List Path")
+			fmt.Println("5: Reset Replicate API Key")
+			fmt.Println("0: Exit")
+			fmt.Print("Your choice: ")
+			scanner.Scan()
+			userResponse := scanner.Text()
+			choice, err := strconv.Atoi(userResponse)
 
-		if userResponse == "yes" {
-			resetKeys()
+			if err != nil || choice < 0 || choice > len(keys) {
+				fmt.Println("Invalid choice")
+				continue
+			}
+			if choice == 0 {
+				fmt.Println("Exiting...")
+				break
+			}
+
+			keyName := keys[choice]
+			resetKey(keyName)
+
+			var prompt string
+			switch keyName {
+			case openAIKeyName:
+				prompt = "Enter your OpenAI API Key:"
+			case geminiKeyName:
+				prompt = "Enter your Gemini API Key:"
+			case ssidKeyName:
+				prompt = "Enter the SSID key:"
+			case ignoreListPathKeyName:
+				prompt = "Enter the path to the ignore list file:"
+			case replicateKeyName:
+				prompt = "Enter your Replicate API Key:"
+			default:
+				continue
+			}
+
+			storeKeyIfNotPresent(keyName, prompt)
+
 		}
-
-		_ = storeKeyIfNotPresent(openAIKeyName, "Enter your OpenAI API Key:")
-
-		_ = storeKeyIfNotPresent(geminiKeyName, "Enter your Gemini API Key:")
-
-		_ = storeKeyIfNotPresent(ssidKeyName, "Enter your SSID:")
-
-		_ = storeKeyIfNotPresent(ignoreListPathKeyName, "Enter the path to the ignore list file:")
-
-		_ = storeKeyIfNotPresent(replicateKeyName, "Enter your Replicate API Key:")
-
 		fmt.Println("API Keys are securely stored and ready for use.")
+
 	},
 }

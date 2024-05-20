@@ -62,7 +62,7 @@ var initCmd = &cobra.Command{
 
 		geminiKey := storeKeyIfNotPresent(geminiKeyName, "Enter your Gemini API Key:")
 
-		ssidKey := storeKeyIfNotPresent(ssidKeyName, "Enter your SSID:")
+		ssidKey := storeKeyIfNotPresent(ssidKeyName, "Enter the ssid key")
 
 		ignoreListPath := storeKeyIfNotPresent(ignoreListPathKeyName, "Enter the path to your ignore list file:")
 
