@@ -32,7 +32,7 @@ Your personal assistant for the CLI that helps you:
 
 ### Welcome
 
-![Welcome](https://cdn.hashnode.com/res/hashnode/image/upload/v1716281866971/XOEd8la_R.png?auto=format)
+![Welcome](https://cdn.hashnode.com/res/hashnode/image/upload/v1716285507443/fmlq1ls4j.png?auto=format)
 
 1. The `init` command
 
@@ -88,6 +88,8 @@ Your personal assistant for the CLI that helps you:
 3. Make sure you provide a valid **ignorelist.txt** file path when you `init` the app. This file is like `.gitignore` and contains the files that you want to ignore when passing prompts to the model. This is done to make sure to stay within the model token limits.
 
 4. The `music` command uses the music-gen model from the replicate API. Make sure you have the correct API key stored in the keyring.
+
+5. Run the `docs` command to open the documentation in the browser.
 
 ## Instructions
 
