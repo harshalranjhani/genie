@@ -16,6 +16,7 @@ var keys = map[int]string{
 	3: ssidKeyName,
 	4: ignoreListPathKeyName,
 	5: replicateKeyName,
+	6: "all",
 }
 
 func resetKey(keyName string) {
@@ -75,6 +76,7 @@ var resetCmd = &cobra.Command{
 			fmt.Println("3: Reset SSID")
 			fmt.Println("4: Reset Ignore List Path")
 			fmt.Println("5: Reset Replicate API Key")
+			fmt.Println("6: Reset All Keys")
 			fmt.Println("0: Exit")
 			fmt.Print("Your choice: ")
 			scanner.Scan()
@@ -91,6 +93,10 @@ var resetCmd = &cobra.Command{
 			}
 
 			keyName := keys[choice]
+			if keyName == "all" {
+				resetKeys()
+				return
+			}
 			resetKey(keyName)
 
 			var prompt string
