@@ -37,8 +37,19 @@ archives:
         format: zip
 
 changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
+    sort: asc
+    filters:
+        exclude:
+            - '^docs:'
+            - '^test:'
+            - 'README'
+            - Merge pull request
+            - Merge branch
+
+brews:
+    - github:
+          owner: harshalranjhani
+          name: homebrew-genie
+      folder: Formula
+      homepage: https://genie.harshalranjhani.in
+      description: An AI powered CLI tool written in Golang. Currently supports command execution, text generation, music generation, image generation and much more.

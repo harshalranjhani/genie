@@ -6,6 +6,7 @@ require (
 	github.com/fatih/color v1.16.0
 	github.com/google/generative-ai-go v0.10.0
 	github.com/joho/godotenv v1.5.1
+	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/spf13/cobra v1.8.0
 	github.com/zalando/go-keyring v0.2.4
 	google.golang.org/api v0.149.0
@@ -28,7 +29,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
