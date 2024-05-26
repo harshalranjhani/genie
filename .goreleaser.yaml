@@ -21,7 +21,7 @@ brews:
   -
     name: genie
     homepage: "https://github.com/harshalranjhani/genie"
-    tap:
+    repository:
       owner: harshalranjhani
       name: homebrew-harshalranjhani
     commit_author:
