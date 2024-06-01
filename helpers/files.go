@@ -2,8 +2,12 @@ package helpers
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -22,7 +26,7 @@ func GetCurrentDirectoriesAndFiles(root string) (structs.Directory, error) {
 	}
 	c := color.New(color.FgCyan).Add(color.Underline)
 	c.Println("Ignore List Path: ", ignoreListPath)
-	ignorePatterns, err := readIgnorePatterns(ignoreListPath)
+	ignorePatterns, err := ReadIgnorePatterns(ignoreListPath)
 	if err != nil {
 		return structs.Directory{}, fmt.Errorf("error reading ignore patterns: %w", err)
 	}
@@ -31,7 +35,7 @@ func GetCurrentDirectoriesAndFiles(root string) (structs.Directory, error) {
 		if err != nil {
 			return err
 		}
-		if shouldIgnore(path, ignorePatterns) {
+		if ShouldIgnore(path, ignorePatterns) {
 			if info.IsDir() {
 				return filepath.SkipDir
 			}
@@ -58,7 +62,7 @@ func GetCurrentDirectoriesAndFiles(root string) (structs.Directory, error) {
 	return rootDir, nil
 }
 
-func readIgnorePatterns(filename string) ([]string, error) {
+func ReadIgnorePatterns(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -73,7 +77,7 @@ func readIgnorePatterns(filename string) ([]string, error) {
 	return patterns, scanner.Err()
 }
 
-func shouldIgnore(path string, patterns []string) bool {
+func ShouldIgnore(path string, patterns []string) bool {
 	for _, pattern := range patterns {
 		matched, err := filepath.Match(pattern, filepath.Base(path))
 		if err != nil {
@@ -112,4 +116,103 @@ func RunCommand(command string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func GenerateMarkdown(headings []structs.Heading, fileName string) {
+
+	// if headings is empty, return an error
+	if len(headings) == 0 {
+		color.Red("No genie headings found to generate markdown file.")
+		return
+	}
+
+	outputPath := fileName + ".md"
+	file, err := os.Create(outputPath)
+	if err != nil {
+		fmt.Printf("Error creating markdown file: %v\n", err)
+		return
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	for _, heading := range headings {
+		link := fmt.Sprintf("[%s:%d](%s#L%d)", filepath.Base(heading.FilePath), heading.LineNum, heading.FilePath, heading.LineNum)
+		_, err := writer.WriteString(fmt.Sprintf("## %s: %s\n", link, heading.Content))
+		if err != nil {
+			fmt.Printf("Error writing to markdown file: %v\n", err)
+			return
+		}
+		for _, subheading := range heading.Subheadings {
+			subLink := fmt.Sprintf("[%s:%d](%s#L%d)", filepath.Base(heading.FilePath), subheading.LineNum, heading.FilePath, subheading.LineNum)
+			_, err := writer.WriteString(fmt.Sprintf("  - %s: %s\n", subLink, subheading.Content))
+			if err != nil {
+				fmt.Printf("Error writing to markdown file: %v\n", err)
+				return
+			}
+		}
+	}
+	writer.Flush()
+	fmt.Println("Markdown file generated successfully!")
+}
+
+type MailObj struct {
+	Email    string            `json:"email"`
+	Headings []structs.Heading `json:"headings"`
+}
+
+type MailRequest struct {
+	MailObj MailObj `json:"mailObj"`
+}
+
+func SendMarkdownFileToEmail(email string, headings []structs.Heading) error {
+
+	// if headings is empty, return an error
+	if len(headings) == 0 {
+		color.Red("No genie headings found to send in the email.")
+		return fmt.Errorf("no headings found to send in the email")
+	}
+
+	fmt.Println("Sending email...")
+	// Prepare the request payload
+	mailRequest := MailRequest{
+		MailObj: MailObj{
+			Email:    email,
+			Headings: headings,
+		},
+	}
+
+	// Marshal the payload to JSON
+	jsonData, err := json.Marshal(mailRequest)
+	if err != nil {
+		return fmt.Errorf("error marshaling mail request: %v", err)
+	}
+
+	// Create the request
+	req, err := http.NewRequest("POST", "https://api.harshalranjhani.in/mail/genie-summary", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("error creating request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("error making request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Read the response
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response body: %v", err)
+	}
+
+	// Check the response status
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("error response from server: %s", body)
+	}
+
+	fmt.Println("Email sent successfully.")
+	return nil
 }

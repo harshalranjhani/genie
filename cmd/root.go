@@ -20,6 +20,7 @@ var rootCmd = &cobra.Command{
 	// },
 }
 
+// genie:heading: This is a heading
 func Execute() {
 	rootCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
 		funcMap := template.FuncMap{

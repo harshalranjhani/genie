@@ -18,3 +18,15 @@ type Directory struct {
 	Files    []File
 	Children []Directory
 }
+
+type Subheading struct {
+	LineNum int
+	Content string
+}
+
+type Heading struct {
+	FilePath    string
+	LineNum     int
+	Content     string
+	Subheadings []Subheading
+}
