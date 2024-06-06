@@ -1,14 +1,13 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
+	"os"
 
 	"github.com/fatih/color"
 	"github.com/harshalranjhani/genie/helpers"
-	"github.com/harshalranjhani/genie/structs"
 	"github.com/spf13/cobra"
+	"github.com/zalando/go-keyring"
 )
 
 func init() {
@@ -16,39 +15,38 @@ func init() {
 }
 
 var greetCmd = &cobra.Command{
-	Use:   "greet",
-	Short: "fun greet genie command",
-	Long:  `This is a fun greet genie command`,
+	Use:   "greet [prompt in quotes or nothing]",
+	Short: "Invoke the wise Genie for CLI guidance",
+	Long: `Invoke the ancient and wise Genie to assist you with your CLI needs. 
+The Genie, residing within the heart of your powerful computer's Command Line Interface, 
+is ready to provide sage advice and practical tips for smarter CLI usage. 
+Whether you're navigating complex commands or seeking general guidance, the Genie is here to help.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		prompt := ""
+		var prompt string
 		if len(args) > 0 {
-			prompt = "Imagine you are an ancient and wise genie, residing not in a lamp, but within the heart of a powerful computer's Command Line Interface (CLI). After centuries of slumber, a user awakens you with a command. If the user includes a specific greeting or request (" + (args[0]) + "), they're seeking your ancient wisdom to navigate the complexities of the CLI more efficiently. They might say something like 'Hello, Genie, how can I list all files in this directory?' Respond with a greeting that reflects your vast knowledge and eagerness to assist in the digital realm. No wish is too complex for you to grant, especially when it comes to mastering the CLI. Craft your response as a one-liner, demonstrating your readiness to offer sage advice and practical tips for smarter CLI usage. Remember, your goal is to match the context of their inquiry or greeting, providing a response that blends the mystical with the practical."
+			prompt = "Imagine you are an ancient and wise genie, residing not in a lamp, but within the heart of a powerful computer's Command Line Interface (CLI). After centuries of slumber, a user awakens you with a command. They greet you with a specific request: \"" + args[0] + "\". As a genie, your ancient wisdom is sought to navigate the complexities of the CLI more efficiently. Respond with a greeting that reflects your vast knowledge and eagerness to assist in the digital realm, and provide a one-liner of sage advice tailored to their request."
 		} else {
-			prompt = "Imagine you are an ancient and wise genie, residing not in a lamp, but within the heart of a powerful computer's Command Line Interface (CLI). After centuries of slumber, a user awakens you with a command. If the user includes a specific greeting or request, they're seeking your ancient wisdom to navigate the complexities of the CLI more efficiently. They might say something like 'Hello, Genie, how can I list all files in this directory?' Respond with a greeting that reflects your vast knowledge and eagerness to assist in the digital realm. No wish is too complex for you to grant, especially when it comes to mastering the CLI. Craft your response as a one-liner, demonstrating your readiness to offer sage advice and practical tips for smarter CLI usage. Remember, your goal is to match the context of their inquiry or greeting, providing a response that blends the mystical with the practical."
-		}
-		resp, err := helpers.GetResponse(prompt, true)
-		if err != nil {
-			log.Fatal(err)
-		}
-		respJSON, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			log.Fatal("Error marshalling response to JSON:", err)
+			prompt = "Imagine you are an ancient and wise genie, residing not in a lamp, but within the heart of a powerful computer's Command Line Interface (CLI). After centuries of slumber, a user awakens you with a command, seeking your ancient wisdom to navigate the complexities of the CLI more efficiently. They might say something like 'Hello, Genie, how can I list all files in this directory?' Respond with a greeting that reflects your vast knowledge and eagerness to assist in the digital realm, and provide a one-liner of sage advice for smarter CLI usage."
 		}
 
-		// Unmarshal the JSON response into the struct
-		var genResp structs.GenResponse
-		err = json.Unmarshal(respJSON, &genResp)
+		engineName, err := keyring.Get(serviceName, "engineName")
 		if err != nil {
-			log.Fatal("Error unmarshalling response JSON:", err)
+			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
-		if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
-			c := color.New(color.FgRed)
-			generatedText := genResp.Candidates[0].Content.Parts[0]
-			c.Println(generatedText)
-		} else {
-			fmt.Println("No generated text found")
+		c := color.New(color.FgRed)
+		switch engineName {
+		case GPTEngine:
+			helpers.GetGPTGeneralResponse(prompt)
+		case GeminiEngine:
+			strResp, err := helpers.GetGeminiGeneralResponse(prompt, true)
+			if err != nil {
+				log.Fatal("Error getting response from Gemini: ", err)
+				os.Exit(1)
+			}
+			c.Println(formatMarkdownToPlainText(strResp))
+		default:
+			log.Fatal("Unknown engine name: ", engineName)
 		}
-
 	},
 }

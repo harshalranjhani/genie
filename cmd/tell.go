@@ -1,14 +1,14 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 
 	"github.com/harshalranjhani/genie/helpers"
-	"github.com/harshalranjhani/genie/structs"
 	"github.com/spf13/cobra"
+	"github.com/zalando/go-keyring"
 )
 
 func init() {
@@ -26,27 +26,22 @@ var tellCmd = &cobra.Command{
 
 		var prompt string = fmt.Sprintf("Context: You are an intelligent CLI tool named Genie, designed to understand and execute file system operations based on the current state of the user's directory and explicit instructions provided. Please provide assistance strictly related to command-line interface (CLI) issues and queries within UNIX or any other shell environment. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics.\nHere's what the user is asking %s", args[0])
 
-		resp, err := helpers.GetResponse(prompt, true)
+		engineName, err := keyring.Get(serviceName, "engineName")
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
-		respJSON, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			log.Fatal("Error marshalling response to JSON:", err)
-		}
-
-		// Unmarshal the JSON response into the struct
-		var genResp structs.GenResponse
-		err = json.Unmarshal(respJSON, &genResp)
-		if err != nil {
-			log.Fatal("Error unmarshalling response JSON:", err)
-		}
-
-		if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
-			generatedText := genResp.Candidates[0].Content.Parts[0]
-			fmt.Println(formatMarkdownToPlainText(generatedText))
-		} else {
-			fmt.Println("No generated text found")
+		switch engineName {
+		case GPTEngine:
+			helpers.GetGPTGeneralResponse(prompt)
+		case GeminiEngine:
+			strResp, err := helpers.GetGeminiGeneralResponse(prompt, true)
+			if err != nil {
+				log.Fatal("Error getting response from Gemini: ", err)
+				os.Exit(1)
+			}
+			fmt.Println(formatMarkdownToPlainText(strResp))
+		default:
+			log.Fatal("Unknown engine name: ", engineName)
 		}
 	},
 }

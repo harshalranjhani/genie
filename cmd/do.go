@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -9,8 +8,8 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/harshalranjhani/genie/helpers"
-	"github.com/harshalranjhani/genie/structs"
 	"github.com/spf13/cobra"
+	"github.com/zalando/go-keyring"
 )
 
 func init() {
@@ -25,6 +24,7 @@ var doCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
+			return
 		}
 
 		safeSettings, _ := cmd.Flags().GetBool("safe")
@@ -38,38 +38,40 @@ var doCmd = &cobra.Command{
 		}
 		var sb strings.Builder
 		helpers.PrintData(&sb, rootDir, 0)
-
 		var prompt string = fmt.Sprintf("Context: You are an intelligent CLI tool named Genie, designed to understand and execute file system operations based on the current state of the user's directory and explicit instructions provided. Your responses must strictly be executable commands suitable for a Unix-like shell, without any additional explanations, comments, or output.\n\nCurrent Directory Snapshot:\n---------------------------\n%s\n\nTask:\n-----\nBased on the above directory snapshot, execute the operation specified by the user's request encapsulated in 'args[0]'. 'args[0]' contains the explicit instruction for a file system operation that needs to be performed on the current directory or its contents.\n\nNote: The command you provide will be run directly in a Unix-like shell environment. Ensure your command is syntactically correct and contextually appropriate for the operation described in 'args[0]'. Your response should consist only of the command necessary to perform the operation, with no additional text.\n\nRequested Operation: %s\nProvide the Command, if you can't match the context or find a similar command, just echo that to the terminal", sb.String(), args[0])
+
+		engineName, err := keyring.Get(serviceName, "engineName")
+		if err != nil {
+			log.Fatal("Error retrieving engine name from keyring:", err)
+		}
 
 		if safeSettings {
 			color.Green("Safety settings are on.")
+			if engineName == GPTEngine {
+				color.Red("Safety settings are low by default for GPT engine.")
+			}
 		} else {
 			color.Red("Safety settings are off.")
 		}
 
-		resp, err := helpers.GetResponse(prompt, safeSettings)
+		switch engineName {
+		case GPTEngine:
+			err := helpers.GetGPTCmdResponse(prompt, true)
+			if err != nil {
+				log.Fatal(err)
+			}
+		case GeminiEngine:
+			err := helpers.GetGeminiCmdResponse(prompt, safeSettings)
+			if err != nil {
+				log.Fatal(err)
+			}
+		default:
+			log.Fatal("Unknown engine name: ", engineName)
+		}
+
 		if err != nil {
 			log.Fatal(err)
 		}
-		respJSON, err := json.MarshalIndent(resp, "", "  ")
-		if err != nil {
-			log.Fatal("Error marshalling response to JSON:", err)
-		}
 
-		// Unmarshal the JSON response into the struct
-		var genResp structs.GenResponse
-		err = json.Unmarshal(respJSON, &genResp)
-		if err != nil {
-			log.Fatal("Error unmarshalling response JSON:", err)
-		}
-
-		if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
-			generatedText := genResp.Candidates[0].Content.Parts[0]
-			// the generatedText is the command to be executed, so we need to run it
-			fmt.Println("Running the command: ", generatedText)
-			helpers.RunCommand(generatedText)
-		} else {
-			fmt.Println("No generated text found")
-		}
 	},
 }
