@@ -47,7 +47,7 @@ universal_binaries:
 brews:
   -
     name: genie
-    homepage: "https://github.com/harshalranjhani/genie"
+    homepage: "https://genie.harshalranjhani.in"
     repository:
       owner: harshalranjhani
       name: homebrew-harshalranjhani
