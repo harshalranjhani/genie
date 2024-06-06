@@ -68,6 +68,12 @@ var initCmd = &cobra.Command{
 
 		replicateKey := storeKeyIfNotPresent(replicateKeyName, "Enter your Replicate API Key:")
 
+		err := keyring.Set(serviceName, "engineName", "Gemini")
+		if err != nil {
+			fmt.Printf("Failed to store engineName: %s\n", err)
+			os.Exit(1)
+		}
+
 		fmt.Println("API Keys are securely stored and ready for use.")
 
 		fmt.Println("OpenAI API Key:", openAIKey)
