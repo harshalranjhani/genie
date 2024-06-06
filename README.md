@@ -79,6 +79,7 @@ Your personal assistant for the CLI that helps you:
 
    - used to switch between engines
    - currently supports gemini and gpt engines
+   - supports the `do`, `tell` and `greet` commands
    - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1717667356512/pN3kKPCio.png?auto=format)
 
 ## Points to remember while testing the app
