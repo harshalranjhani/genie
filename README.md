@@ -32,7 +32,7 @@ Your personal assistant for the CLI that helps you:
 
 ### Welcome
 
-![Welcome](https://cdn.hashnode.com/res/hashnode/image/upload/v1716285507443/fmlq1ls4j.png?auto=format)
+![Welcome](https://cdn.hashnode.com/res/hashnode/image/upload/v1718473561830/j4aVeAVll.png?auto=format)
 
 1. The `init` command
 
