@@ -74,7 +74,7 @@ var initCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		fmt.Println("API Keys are securely stored and ready for use.")
+		fmt.Println("Keys are securely stored and ready for use.")
 
 		fmt.Println("OpenAI API Key:", openAIKey)
 		fmt.Println("Gemini API Key:", geminiKey)

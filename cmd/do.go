@@ -30,11 +30,13 @@ var doCmd = &cobra.Command{
 		safeSettings, _ := cmd.Flags().GetBool("safe")
 		dir, err := os.Getwd()
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
+			os.Exit(1)
 		}
 		rootDir, err := helpers.GetCurrentDirectoriesAndFiles(dir)
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
+			os.Exit(1)
 		}
 		var sb strings.Builder
 		helpers.PrintData(&sb, rootDir, 0)

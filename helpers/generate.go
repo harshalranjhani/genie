@@ -3,6 +3,7 @@ package helpers
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/base64"
 	"fmt"
 	"image/png"
@@ -17,6 +18,9 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
+//go:embed scripts/generate.py
+var generatePy []byte
+
 func GenerateGeminiImage(prompt string) (string, error) {
 	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
 	s.Prefix = color.HiCyanString("Analyzing: ")
@@ -29,13 +33,30 @@ func GenerateGeminiImage(prompt string) (string, error) {
 		fmt.Println("SSID not found in keyring. Please run `genie init` to store the key.")
 		os.Exit(1)
 	}
-	cmd := exec.Command("python", "scripts/generate.py", prompt, ssid)
+
+	tmpFile, err := os.CreateTemp("", "generate-*.py")
+	if err != nil {
+		s.Stop()
+		return "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	if _, err := tmpFile.Write(generatePy); err != nil {
+		s.Stop()
+		return "", fmt.Errorf("failed to write to temp file: %w", err)
+	}
+	if err := tmpFile.Close(); err != nil {
+		s.Stop()
+		return "", fmt.Errorf("failed to close temp file: %w", err)
+	}
+
+	cmd := exec.Command("python", tmpFile.Name(), prompt, ssid)
 
 	var out bytes.Buffer
 	cmd.Stdout = &out
 
 	// Run the command
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		s.Stop()
 		return "", fmt.Errorf("failed to execute python script: %w", err)
@@ -61,19 +82,19 @@ func GenerateGPTImage(prompt string) (string, error) {
 	c := openai.NewClient(openAIKey)
 	ctx := context.Background()
 
-	reqUrl := openai.ImageRequest{
-		Prompt:         "Parrot on a skateboard performs a trick, cartoon style, natural light, high detail",
-		Size:           openai.CreateImageSize256x256,
-		ResponseFormat: openai.CreateImageResponseFormatURL,
-		N:              1,
-	}
-	respUrl, err := c.CreateImage(ctx, reqUrl)
-	if err != nil {
-		s.Stop()
-		fmt.Printf("Image creation error: %v\n", err)
-		return "", err
-	}
-	fmt.Println(respUrl.Data[0].URL)
+	// reqUrl := openai.ImageRequest{
+	// 	Prompt:         prompt,
+	// 	Size:           openai.CreateImageSize256x256,
+	// 	ResponseFormat: openai.CreateImageResponseFormatURL,
+	// 	N:              1,
+	// }
+	// respUrl, err := c.CreateImage(ctx, reqUrl)
+	// if err != nil {
+	// 	s.Stop()
+	// 	fmt.Printf("Image creation error: %v\n", err)
+	// 	return "", err
+	// }
+	// fmt.Println(respUrl.Data[0].URL)
 
 	reqBase64 := openai.ImageRequest{
 		Prompt:         prompt,

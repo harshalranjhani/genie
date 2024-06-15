@@ -118,7 +118,7 @@ var resetCmd = &cobra.Command{
 			storeKeyIfNotPresent(keyName, prompt)
 
 		}
-		fmt.Println("API Keys are securely stored and ready for use.")
+		fmt.Println("Keys are securely stored and ready for use.")
 
 	},
 }

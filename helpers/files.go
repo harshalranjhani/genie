@@ -22,13 +22,13 @@ func GetCurrentDirectoriesAndFiles(root string) (structs.Directory, error) {
 	rootDir := structs.Directory{Name: root}
 	ignoreListPath, err := keyring.Get("genie", "ignore_list_path")
 	if err != nil {
-		return structs.Directory{}, fmt.Errorf("error getting ignore list path: %w", err)
+		return structs.Directory{}, fmt.Errorf("Error getting ignore list path: %w", err)
 	}
 	c := color.New(color.FgCyan).Add(color.Underline)
 	c.Println("Ignore List Path: ", ignoreListPath)
 	ignorePatterns, err := ReadIgnorePatterns(ignoreListPath)
 	if err != nil {
-		return structs.Directory{}, fmt.Errorf("error reading ignore patterns: %w", err)
+		return structs.Directory{}, fmt.Errorf("Error reading ignore patterns: %w", err)
 	}
 
 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
