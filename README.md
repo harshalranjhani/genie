@@ -82,6 +82,16 @@ Your personal assistant for the CLI that helps you:
    - supports the `do`, `tell` and `greet` commands
    - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1717667356512/pN3kKPCio.png?auto=format)
 
+7. The `chat` command
+
+   - maintain a conversation with the genie
+   - currently supports only the gemini engine
+   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1718473330436/wR_UMtMCe.png?auto=format)
+
+   - flags
+     - `--safe`: have a conversation in safe mode
+
+
 ## Points to remember while testing the app
 
 1. Do not forget to run the `init` command before running any other command
