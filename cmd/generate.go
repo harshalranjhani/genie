@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/harshalranjhani/genie/helpers"
 	"github.com/spf13/cobra"
+	"github.com/zalando/go-keyring"
 )
 
 func init() {
@@ -21,15 +23,29 @@ var generateCmd = &cobra.Command{
 			return
 		}
 
-		prompt := args[0]
-
-		filePath, err := helpers.GenerateImage(prompt)
-
+		engineName, err := keyring.Get(serviceName, "engineName")
 		if err != nil {
-			fmt.Println("Error:", err)
-			return
+			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
-		fmt.Println("Image generated:", filePath)
+		prompt := args[0]
+		switch engineName {
+		case GPTEngine:
+			filePath, err := helpers.GenerateGPTImage(prompt)
+			if err != nil {
+				return
+			}
+			fmt.Println("Image generated:", filePath)
+		case GeminiEngine:
+			filePath, err := helpers.GenerateGeminiImage(prompt)
+			if err != nil {
+				fmt.Println("Error:", err)
+				return
+			}
+			fmt.Println("Image generated:", filePath)
+		default:
+			log.Fatal("Unknown engine name: ", engineName)
+		}
+
 	},
 }
