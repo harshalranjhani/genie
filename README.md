@@ -18,7 +18,9 @@ Your personal assistant for the CLI that helps you:
 - run commands
 - generate images
 - generate music
+- summarize comments (supports multiple languages)
 - get information about anything related to tech directly from the CLI
+- maintain a chat session with the genie for advanced context understanding
 
 <p align="center">
 <a href="https://genie.harshalranjhani.in">
