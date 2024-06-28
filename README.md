@@ -92,6 +92,18 @@ Your personal assistant for the CLI that helps you:
 
    - flags
      - `--safe`: have a conversation in safe mode
+   
+8. The `scrape` command
+
+   - used to scrape the web
+   - use: `genie scrape <url>`
+   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1718473426820/1J9J9Q1Z-.png?auto=format)
+
+   - flags
+     - `--element`: specify the element to scrape
+     - `--output`: specify the output file path
+     - `--pagination`: specify the pagination element
+     - `--limit`: specify the limit of the number of pages to scrape
 
 
 ## Points to remember while testing the app
