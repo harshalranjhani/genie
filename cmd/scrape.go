@@ -11,13 +11,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(scrapeCmd)
-}
-
 var scrapeCmd = &cobra.Command{
 	Use:   "scrape [url]",
-	Short: "Scrape data from a URL",
+	Short: "Scrape data from a URL, supports pagination!",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		url := args[0]
