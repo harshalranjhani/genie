@@ -97,7 +97,7 @@ Your personal assistant for the CLI that helps you:
 
    - used to scrape the web
    - use: `genie scrape <url>`
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1718473426820/1J9J9Q1Z-.png?auto=format)
+   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1719567001823/y8ycEkGXV.png?auto=format)
 
    - flags
      - `--element`: specify the element to scrape
