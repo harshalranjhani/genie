@@ -89,7 +89,7 @@ func sendVerificationEmail(email string) error {
 }
 
 func waitForVerification(email string) (string, error) {
-	c, _, err := websocket.DefaultDialer.Dial("ws://harshalranjhaniapi.onrender.com", nil)
+	c, _, err := websocket.DefaultDialer.Dial("wss://harshalranjhaniapi.onrender.com", nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to connect to WebSocket server: %v", err)
 	}
