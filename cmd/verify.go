@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 )
@@ -127,51 +129,60 @@ var verifyCmd = &cobra.Command{
 
 		status, err := loadStatus()
 		if err != nil {
-			fmt.Println("Error loading status:", err)
+			fmt.Println(color.RedString("Error loading status:"), err)
 			return
 		}
 
 		if status != nil && status.Email == email {
-			fmt.Println("User is already verified.")
+			fmt.Println(color.GreenString("User is already verified."))
 			return
 		} else if status != nil && status.Email != email {
-			fmt.Println("A different user is already verified.")
+			fmt.Println(color.YellowString("A different user is already verified. Removing existing status..."))
 			// remove the status file
 			statusFile, err := getStatusFilePath()
 			if err != nil {
-				fmt.Println("Error getting status file path:", err)
+				fmt.Println(color.RedString("Error getting status file path:"), err)
 				return
 			}
 			err = os.Remove(statusFile)
 			if err != nil {
-				fmt.Println("Error removing status file:", err)
+				fmt.Println(color.RedString("Error removing status file:"), err)
 				return
 			}
 		}
 
+		fmt.Println(color.CyanString("Sending verification email... Please do not close this tab until the process is complete."))
+		s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+		s.Prefix = color.CyanString("Sending: ")
+		s.Start()
+
 		err = sendVerificationEmail(email)
+		s.Stop()
 		if err != nil {
-			fmt.Println("Error sending verification email:", err)
+			fmt.Println(color.RedString("Error sending verification email:"), err)
 			return
 		}
 
-		fmt.Println("Verification email sent. Please check your inbox.")
-		fmt.Println("Waiting for verification...")
+		fmt.Println(color.GreenString("Verification email sent. Please check your inbox."))
+		fmt.Println(color.CyanString("Waiting for verification..."))
 
+		s.Prefix = color.CyanString("Verifying: ")
+		s.Start()
 		token, err := waitForVerification(email)
+		s.Stop()
 		if err != nil {
-			fmt.Println("Error during verification:", err)
+			fmt.Println(color.RedString("Error during verification:"), err)
 			return
 		}
 
 		status = &UserStatus{Email: email, Token: token}
 		err = saveStatus(status)
 		if err != nil {
-			fmt.Println("Error saving status:", err)
+			fmt.Println(color.RedString("Error saving status:"), err)
 			return
 		}
 
-		fmt.Println("Email verified successfully.")
+		fmt.Println(color.GreenString("Email verified successfully. You now have access to extra features!"))
 	},
 }
 
