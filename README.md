@@ -1,7 +1,5 @@
 # genie - Your CLI assistant 🧞‍♂️
 
-## Submission for MLH Fellowship 2024 🌟
-
 [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/harshalranjhani/genie?logo=github&style=for-the-badge)](https://github.com/harshalranjhani)
 [![GitHub last commit](https://img.shields.io/github/last-commit/harshalranjhani/genie?style=for-the-badge&logo=git)](https://github.com/harshalranjhani)
 [![GitHub stars](https://img.shields.io/github/stars/harshalranjhani/genie?style=for-the-badge)](https://github.com/harshalranjhani/genie)
