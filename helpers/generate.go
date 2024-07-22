@@ -70,7 +70,7 @@ func GenerateGeminiImage(prompt string) (string, error) {
 
 func GenerateGPTImage(prompt string) (string, error) {
 	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
-	s.Prefix = color.HiCyanString("Analyzing: ")
+	s.Prefix = color.HiCyanString("Generating Image: ")
 	s.Start()
 
 	openAIKey, err := keyring.Get("genie", "openai_api_key")
@@ -126,7 +126,7 @@ func GenerateGPTImage(prompt string) (string, error) {
 	}
 
 	prompt = strings.Replace(prompt, " ", "_", -1)
-	filename := fmt.Sprintf("images/%s.png", prompt)
+	filename := fmt.Sprintf("%s.png", prompt)
 
 	file, err := os.Create(filename)
 	if err != nil {
