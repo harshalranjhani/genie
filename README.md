@@ -53,7 +53,8 @@ Your personal assistant for the CLI that helps you:
 3. The `generate` command
 
    - used to generate images from text
-   - this currently only works on local and not on the build, i am working on a fix
+   - this currently only works on local with Gemini Engine and not on the build, i am working on a fix
+   - works on the build with the GPT engine
    - use: `genie generate <prompt>`
    - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1716283662684/fzy4kQcyO.png?auto=format)
    - this was the generated image:
@@ -108,7 +109,7 @@ Your personal assistant for the CLI that helps you:
 
 1. Do not forget to run the `init` command before running any other command
 
-2. The `generate` command currently only works on local and not on the build, i am working on a fix.
+2. The `generate` command with Gemini Engine currently only works on local and not on the build, i am working on a fix. It works on the build directly with the GPT engine.
 
 3. Make sure you provide a valid **ignorelist.txt** file path when you `init` the app. This file is like `.gitignore` and contains the files that you want to ignore when passing prompts to the model. This is done to make sure to stay within the model token limits.
 
