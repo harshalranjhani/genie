@@ -79,7 +79,7 @@ Your personal assistant for the CLI that helps you:
 
    - used to switch between engines
    - currently supports gemini and gpt engines
-   - supports the `do`, `tell` and `greet` commands
+   - supports the `do`, `tell`, `greet` and `generate` commands
    - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1717667356512/pN3kKPCio.png?auto=format)
 
 7. The `chat` command
