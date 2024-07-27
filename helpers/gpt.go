@@ -109,8 +109,8 @@ func GetGPTCmdResponse(prompt string, safeOn bool) error {
 		}
 	}
 
-	fmt.Println("Running the command: ", command)
 	s.Stop()
+	fmt.Println("Running the command: ", command)
 	RunCommand(command)
 
 	return nil
