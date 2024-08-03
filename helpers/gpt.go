@@ -14,7 +14,7 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
-func GetGPTGeneralResponse(prompt string) {
+func GetGPTGeneralResponse(prompt string, includeDir bool) {
 	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
 	s.Prefix = color.HiCyanString("Analyzing: ")
 	s.Start()

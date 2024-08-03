@@ -99,7 +99,7 @@ func GetGeminiCmdResponse(prompt string, safeOn bool) error {
 	}
 }
 
-func GetGeminiGeneralResponse(prompt string, safeOn bool) (string, error) {
+func GetGeminiGeneralResponse(prompt string, safeOn bool, includeDir bool) (string, error) {
 	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
 	s.Prefix = color.HiCyanString("Analyzing: ")
 	s.Start()

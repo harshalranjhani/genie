@@ -37,9 +37,9 @@ Whether you're navigating complex commands or seeking general guidance, the Geni
 		c := color.New(color.FgRed)
 		switch engineName {
 		case GPTEngine:
-			helpers.GetGPTGeneralResponse(prompt)
+			helpers.GetGPTGeneralResponse(prompt, false)
 		case GeminiEngine:
-			strResp, err := helpers.GetGeminiGeneralResponse(prompt, true)
+			strResp, err := helpers.GetGeminiGeneralResponse(prompt, true, false)
 			if err != nil {
 				log.Fatal("Error getting response from Gemini: ", err)
 				os.Exit(1)

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/harshalranjhani/genie/helpers"
 	"github.com/spf13/cobra"
@@ -13,6 +14,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(tellCmd)
+	tellCmd.PersistentFlags().Bool("include-dir", false, "Option to include the current directory snapshot in the request.")
 }
 
 var tellCmd = &cobra.Command{
@@ -22,19 +24,41 @@ var tellCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
+			return
 		}
 
-		var prompt string = fmt.Sprintf("Context: You are an intelligent CLI tool named Genie, designed to understand and execute file system operations based on the current state of the user's directory and explicit instructions provided. Please provide assistance strictly related to command-line interface (CLI) issues and queries within UNIX or any other shell environment. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics.\nHere's what the user is asking %s", args[0])
+		includeDir, _ := cmd.Flags().GetBool("include-dir")
+
+		var prompt string
 
 		engineName, err := keyring.Get(serviceName, "engineName")
 		if err != nil {
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
+
+		if includeDir {
+			dir, err := os.Getwd()
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+			rootDir, err := helpers.GetCurrentDirectoriesAndFiles(dir)
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+			var sb strings.Builder
+			helpers.PrintData(&sb, rootDir, 0)
+			prompt = fmt.Sprintf("Context: You are an intelligent CLI tool named Genie, designed to understand and execute file system operations based on the current state of the user's directory and explicit instructions provided. Please provide assistance strictly related to command-line interface (CLI) issues and queries within UNIX or any other shell environment and any other thing related to the field of Computer Science. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics.\nHere's what the user is asking %s. The user has also provided the current directory's snapshot\n\nCurrent Directory Snapshot:\n---------------------------\n%s.Use it if required.", args[0], sb.String())
+		} else {
+			prompt = fmt.Sprintf("Context: You are an intelligent CLI tool named Genie, designed to understand and execute file system operations based on the current state of the user's directory and explicit instructions provided. Please provide assistance strictly related to command-line interface (CLI) issues and queries within UNIX or any other shell environment and any other thing related to the field of Computer Science. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics.\nHere's what the user is asking %s", args[0])
+		}
+
 		switch engineName {
 		case GPTEngine:
-			helpers.GetGPTGeneralResponse(prompt)
+			helpers.GetGPTGeneralResponse(prompt, includeDir)
 		case GeminiEngine:
-			strResp, err := helpers.GetGeminiGeneralResponse(prompt, true)
+			strResp, err := helpers.GetGeminiGeneralResponse(prompt, true, includeDir)
 			if err != nil {
 				log.Fatal("Error getting response from Gemini: ", err)
 				os.Exit(1)
