@@ -29,7 +29,7 @@ func GetGPTGeneralResponse(prompt string, includeDir bool) {
 	ctx := context.Background()
 
 	req := openai.ChatCompletionRequest{
-		Model: openai.GPT3Dot5Turbo,
+		Model: "gpt-4o-mini",
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleUser,
@@ -79,7 +79,7 @@ func GetGPTCmdResponse(prompt string, safeOn bool) error {
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model: openai.GPT3Dot5Turbo,
+			Model: "gpt-4o-mini",
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role:    openai.ChatMessageRoleUser,
