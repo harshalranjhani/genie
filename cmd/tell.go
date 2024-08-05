@@ -59,6 +59,7 @@ var tellCmd = &cobra.Command{
 					"  [completion] Generate the autocompletion script for the specified shell.\n"+
 					"  [do]        Command the genie to do something.\n"+
 					"  [docs]      Open the documentation.\n"+
+					"  [document] Document your code with genie.\n"+
 					"  [engine]    Get the current engine being used by genie.\n"+
 					"  [generate]  Generate an image from a prompt.\n"+
 					"  [greet]     Invoke the wise Genie for CLI guidance.\n"+
@@ -92,6 +93,7 @@ var tellCmd = &cobra.Command{
 					"  [completion] Generate the autocompletion script for the specified shell.\n"+
 					"  [do]        Command the genie to do something.\n"+
 					"  [docs]      Open the documentation.\n"+
+					"  [document] Document your code with genie.\n"+
 					"  [engine]    Get the current engine being used by genie.\n"+
 					"  [generate]  Generate an image from a prompt.\n"+
 					"  [greet]     Invoke the wise Genie for CLI guidance.\n"+
