@@ -35,75 +35,220 @@ Your personal assistant for the CLI that helps you:
 
 ![Welcome](https://cdn.hashnode.com/res/hashnode/image/upload/v1718473561830/j4aVeAVll.png?auto=format)
 
-1. The `init` command
+## Overview
 
-   - start the genie CLI with the `init` command
-   - store all your API keys when prompted
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1716282272366/Lj-xUwtH1.png?auto=format)
+The Genie CLI provides a set of commands to help developers use AI to automate tasks, generate documentation, and improve their workflow. This documentation covers the available commands, their usage, and examples to help you get started with the Genie CLI.
 
-2. The `do` command
+<div class="razorpay-embed-btn" data-url="https://pages.razorpay.com/pl_OTSm4FIikwNBmA/view" data-text="Support Genie!" data-color="#528FF0" data-size="medium">
+  <script>
+    (function(){
+      var d=document; var x=!d.getElementById('razorpay-embed-btn-js')
+      if(x){ var s=d.createElement('script'); s.defer=!0;s.id='razorpay-embed-btn-js';
+      s.src='https://cdn.razorpay.com/static/embed_btn/bundle.js';d.body.appendChild(s);} else{var rzp=window['__rzp__'];
+      rzp && rzp.init && rzp.init()}})();
+  </script>
+</div>
 
-   - used to run commands
-   - use: `genie do <prompt>`
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1716282661700/X74dam0Jl.png?auto=format)
+You can support the development of Genie by contributing to the project or making a donation. You can also make donations using the `support` command in the Genie CLI.
 
-   - flags
-     - `--safe`: run the command in a safe mode, prevents direct execution of dangerous commands
-     - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1716282782898/ox37E_4wD.png?auto=format)
+Once you have made a donation, you can use the `verify` command to verify your donation and get access to additional features and benefits later on.
 
-3. The `generate` command
+If you've donated, a big thank you from genie!
 
-   - used to generate images from text
-   - this currently only works on local with Gemini Engine and not on the build, i am working on a fix
-   - works on the build with the GPT engine
-   - use: `genie generate <prompt>`
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1716283662684/fzy4kQcyO.png?auto=format)
-   - this was the generated image:
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1716283748566/kC1lCPYMC.jpg?auto=format)
+## Configurations
 
-4. The `tell` command
+`genie init`
 
-   - used to get information about anything related to tech
-   - use: `genie tell <prompt>`
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1716283848962/irLWaz5mA.png?auto=format)
+The `init` command is used to store your API keys, session IDs, and ignore list file paths. By running this command, you can configure the Genie CLI to access external services and customize its behavior.
 
-5. The `music` command
+### Ignore List File Paths
 
-   - used to generate music, uses the music-gen model from the replicate API
-   - use: `genie music <prompt>`
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1716284145216/fx7b1R1nC.png?auto=format)
+When configuring the Genie CLI, you can specify ignore patterns to exclude certain files or directories from processing. This can be useful for skipping test files, build directories, or other irrelevant content.
 
-   - flags
-     - `--d`: specify the duration of the audio
-     - `--logs`: show logs while generating the audio
+The ignore list is a file that contains a list of files and directories that you want to exclude from your project. This is highly important to reduce the token count and improve the performance of the analysis. Create an ignore list file anywhere on your system and provide the path to it during the `genie init` command.
 
-6. The `switch` command
+This is a text file with the name `ignorelist.txt` that contains a list of files and directories to ignore. For example:
 
-   - used to switch between engines
-   - currently supports gemini and gpt engines
-   - supports the `do`, `tell`, `greet` and `generate` commands
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1717667356512/pN3kKPCio.png?auto=format)
+```text
+node_modules
+dist
+build
+```
 
-7. The `chat` command
+### API Keys
 
-   - maintain a conversation with the genie
-   - currently supports only the gemini engine
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1718473330436/wR_UMtMCe.png?auto=format)
+The Genie CLI requires API keys to access external services for text-to-image generation, text-to-music generation, and other features. You can obtain API keys from the respective service providers and store them securely using the `genie init` command.
 
-   - flags
-     - `--safe`: have a conversation in safe mode
-   
-8. The `scrape` command
+## Commands
 
-   - used to scrape the web
-   - use: `genie scrape <url>`
-   - ![image](https://cdn.hashnode.com/res/hashnode/image/upload/v1719567001823/y8ycEkGXV.png?auto=format)
+### 1. `do`
 
-   - flags
-     - `--element`: specify the element to scrape
-     - `--output`: specify the output file path
-     - `--pagination`: specify the pagination element
-     - `--limit`: specify the limit of the number of pages to scrape
+The `do` command allows you to execute commands that you might not remember. Leveraging the power of AI, Genie can help you run commands without having to remember them. Just type in what you want to do, and Genie will take care of the rest.
+
+**Usage:**
+
+```bash
+genie do "prompt"
+```
+
+**Flags:**
+
+- `--safe`: Run the command in safe mode, which ensures that the command is executed only if it is safe to do so.
+
+**Description:**
+
+- **AI-Powered Command Execution**: Execute commands using natural language prompts.
+- **Helpful for Beginners**: Ideal for beginners who may not be familiar with command-line syntax.
+
+### 2. `generate`
+
+The `generate` command is used to generate images from text. This can be useful for generating any kind of image from text, such as diagrams, charts, or illustrations.
+
+**Usage:**
+
+```bash
+genie generate "prompt"
+```
+
+**Description:**
+
+- **Text-to-Image Generation**: Converts text prompts into images.
+- **Versatile Use Cases**: Can be used for creating diagrams, charts, illustrations, and more.
+
+**Note:** When using the gemini engine, make sure you pass the SSID and API key as environment variables.
+The SSID is the `__Secure-1PSID` cookie value from the browser after logging into the [Gemini website](https://gemini.google.com).
+
+### 3. `music`
+
+The `music` command allows you to generate music based on a text prompt. This can be useful for creating background music, soundtracks, or other audio content.
+
+**Usage:**
+
+```bash
+genie music "prompt"
+```
+
+**Flags:**
+
+- `--d`: Specify the duration of the generated music. (Default: 8 seconds, max: 15 seconds)
+- `--logs`: Display logs during music generation.
+
+**Description:**
+
+- **Text-to-Music Generation**: Converts text prompts into music.
+- **Customizable Duration**: Set the duration of the generated music.
+- **Real-Time Logs**: Option to display logs during music generation.
+
+### 4. `tell`
+
+The `tell` command is used to generate text responses to questions or prompts. This can be useful for generating responses to queries, providing information, or creating conversational content about the CLI.
+
+**Usage:**
+
+```bash
+genie tell "prompt"
+```
+
+**Flags:**
+
+- `--include-dir`: Include the current directory snapshot in the request for better context.
+
+**Description:**
+
+- **Text Response Generation**: Generates text responses to prompts.
+- **Conversational AI**: Provides information and answers questions in a conversational format.
+
+### 5. `summarize`
+
+The `summarize` command generates a structured markdown summary of comments within your project files. This is useful for creating documentation and reviewing code.
+
+For this command to work, you need to have comments in your code that are marked as headings and subheadings. Genie will automatically detect these comments and generate a markdown summary based on them.
+
+Example of comments in code:
+
+In python:
+
+```python
+# genie:heading: This is a heading
+# genie:subheading: This is a subheading
+```
+
+or in javascript:
+
+```javascript
+// genie:heading: This is a heading
+// genie:subheading: This is a subheading
+```
+
+Make sure to match the exact format for the comments to be detected correctly. The format is `genie:heading:` for headings and `genie:subheading:` for subheadings. Remember to add a space after the colon and before the text. Also add a space after the comment marker (`#` or `//`) and before the `genie` keyword.
+
+This command can be used in relation to the `document` command to generate summaries of the codebase.
+
+**Usage:**
+
+```bash
+genie summarize
+```
+
+**Flags:**
+
+- `--email`: Send the generated markdown summary as a PDF via email.
+- `--support`: Lists the supported languages for comment detection.
+- `--filename`: Specify the filename for the generated markdown summary.
+
+**Description:**
+
+- **Automatic Detection**: Scans project files for comments marked as headings and subheadings.
+- **Multi-Language Support**: Supports multiple programming languages by recognizing various comment markers.
+- **Email Integration**: Option to send the generated markdown summary as a PDF via email.
+- **Ignore Patterns**: Customizable ignore patterns to exclude specific files or directories.
+
+### 6. `document`
+
+The `document` command generates documentation for your file and integrates it with genie comments. This can then be useful to get easier summaries of your code and to understand the codebase better.
+
+**Usage:**
+
+```bash
+genie document
+```
+
+**Flags:**
+
+- `--file`: Specify the file to generate documentation for. (Required flag)
+
+**Description:**
+
+- **Automatic Documentation Generation**: Generates documentation for your codebase.
+- **Integrates with Genie Comments**: Utilizes genie comments to create structured documentation.
+- **Customizable Output**: Specify the file to generate documentation for.
+
+### 7. `chat`
+
+The `chat` command opens a chat interface where you can interact with Genie in a conversational manner. This can be useful for asking questions, getting help, or exploring the capabilities of the Genie CLI.
+
+**Note:** This only works for the Gemini engine. Make sure you have the required API keys configured.
+
+**Usage:**
+
+```bash
+genie chat
+```
+
+**Flags:**
+
+- `--safe`: Run the command in safe mode, which ensures that the conversation is safe and appropriate.
+
+**Description:**
+
+- **Conversational Interface**: Interact with Genie in a chat-like environment.
+- **AI-Powered Responses**: Get answers to questions and prompts in a conversational format.
+
+## Conclusion
+
+The Genie CLI is a powerful tool that helps streamline your development workflow by automating tasks, generating documentation, and more. By using the available commands, you can improve your productivity and maintain a consistent project structure.
+
+For more information, visit the [Genie About Page](https://genie.harshalranjhani.in/about).
 
 
 ## Points to remember while testing the app
