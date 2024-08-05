@@ -39,15 +39,8 @@ Your personal assistant for the CLI that helps you:
 
 The Genie CLI provides a set of commands to help developers use AI to automate tasks, generate documentation, and improve their workflow. This documentation covers the available commands, their usage, and examples to help you get started with the Genie CLI.
 
-<div class="razorpay-embed-btn" data-url="https://pages.razorpay.com/pl_OTSm4FIikwNBmA/view" data-text="Support Genie!" data-color="#528FF0" data-size="medium">
-  <script>
-    (function(){
-      var d=document; var x=!d.getElementById('razorpay-embed-btn-js')
-      if(x){ var s=d.createElement('script'); s.defer=!0;s.id='razorpay-embed-btn-js';
-      s.src='https://cdn.razorpay.com/static/embed_btn/bundle.js';d.body.appendChild(s);} else{var rzp=window['__rzp__'];
-      rzp && rzp.init && rzp.init()}})();
-  </script>
-</div>
+[!<img src="https://files.edgestore.dev/gre1kolpt9w3vnwd/publicImages/_public/7d74e1a7-32fc-4266-b19a-badb997da2ba.png" alt="Support Genie!" width="300" height="70">](https://pages.razorpay.com/pl_OTSm4FIikwNBmA/view)
+
 
 You can support the development of Genie by contributing to the project or making a donation. You can also make donations using the `support` command in the Genie CLI.
 
