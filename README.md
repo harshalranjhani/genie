@@ -218,6 +218,8 @@ genie document
 
 ### 7. `chat`
 
+Note: The `chat` command is only available for supporters of the Genie project.
+
 The `chat` command opens a chat interface where you can interact with Genie in a conversational manner. This can be useful for asking questions, getting help, or exploring the capabilities of the Genie CLI.
 
 **Note:** This only works for the Gemini engine. Make sure you have the required API keys configured.
