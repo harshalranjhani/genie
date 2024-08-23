@@ -12,6 +12,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/google/generative-ai-go/genai"
+	"github.com/harshalranjhani/genie/helpers"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 	"google.golang.org/api/option"
@@ -23,9 +24,10 @@ func init() {
 }
 
 var chatCmd = &cobra.Command{
-	Use:   "chat",
-	Short: "Start a chat with the genie and maintain a conversation.",
-	Long:  `Use this command to chat with the genie and maintain a conversation directly from the terminal.`,
+	Use:     "chat",
+	Short:   "Start a chat with the genie and maintain a conversation.",
+	Long:    `Use this command to chat with the genie and maintain a conversation directly from the terminal.`,
+	PreRunE: helpers.VerifySubscriptionMiddleware,
 	Run: func(cmd *cobra.Command, args []string) {
 		engineName, err := keyring.Get(serviceName, "engineName")
 		if err != nil {

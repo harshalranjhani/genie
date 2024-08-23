@@ -1,123 +1,15 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
-	"github.com/gorilla/websocket"
+	"github.com/harshalranjhani/genie/helpers"
 	"github.com/spf13/cobra"
 )
-
-type UserStatus struct {
-	Email string `json:"email"`
-	Token string `json:"token"`
-}
-
-func getStatusFilePath() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	configDir := filepath.Join(homeDir, ".genie")
-	if _, err := os.Stat(configDir); os.IsNotExist(err) {
-		err := os.Mkdir(configDir, 0700)
-		if err != nil {
-			return "", err
-		}
-	}
-	return filepath.Join(configDir, "user_status.json"), nil
-}
-
-func loadStatus() (*UserStatus, error) {
-	statusFile, err := getStatusFilePath()
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := os.Stat(statusFile); os.IsNotExist(err) {
-		return nil, nil
-	}
-
-	data, err := os.ReadFile(statusFile)
-	if err != nil {
-		return nil, err
-	}
-
-	var status UserStatus
-	err = json.Unmarshal(data, &status)
-	if err != nil {
-		return nil, err
-	}
-
-	return &status, nil
-}
-
-func saveStatus(status *UserStatus) error {
-	statusFile, err := getStatusFilePath()
-	if err != nil {
-		return err
-	}
-
-	data, err := json.Marshal(status)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(statusFile, data, 0600)
-}
-
-func sendVerificationEmail(email string) error {
-	client := &http.Client{Timeout: time.Second * 10}
-	reqBody, _ := json.Marshal(map[string]string{
-		"email": email,
-	})
-	resp, err := client.Post("https://harshalranjhaniapi.onrender.com/genie/send-verification", "application/json", bytes.NewBuffer(reqBody))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to send verification email")
-	}
-	return nil
-}
-
-func waitForVerification(email string) (string, error) {
-	c, _, err := websocket.DefaultDialer.Dial("wss://harshalranjhaniapi.onrender.com", nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to connect to WebSocket server: %v", err)
-	}
-	defer c.Close()
-
-	message := map[string]string{"email": email}
-	msg, _ := json.Marshal(message)
-	c.WriteMessage(websocket.TextMessage, msg)
-
-	_, messageBytes, err := c.ReadMessage()
-	if err != nil {
-		return "", fmt.Errorf("error reading WebSocket message: %v", err)
-	}
-
-	var response map[string]string
-	if err := json.Unmarshal(messageBytes, &response); err != nil {
-		return "", fmt.Errorf("error unmarshaling WebSocket message: %v", err)
-	}
-
-	token, ok := response["token"]
-	if !ok {
-		return "", fmt.Errorf("Payment not found.")
-	}
-
-	return token, nil
-}
 
 var verifyCmd = &cobra.Command{
 	Use:   "verify [email]",
@@ -127,7 +19,7 @@ var verifyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		email := args[0]
 
-		status, err := loadStatus()
+		status, err := helpers.LoadStatus()
 		if err != nil {
 			fmt.Println(color.RedString("Error loading status:"), err)
 			return
@@ -139,7 +31,7 @@ var verifyCmd = &cobra.Command{
 		} else if status != nil && status.Email != email {
 			fmt.Println(color.YellowString("A different user is already verified. Removing existing status..."))
 			// remove the status file
-			statusFile, err := getStatusFilePath()
+			statusFile, err := helpers.GetStatusFilePath()
 			if err != nil {
 				fmt.Println(color.RedString("Error getting status file path:"), err)
 				return
@@ -156,7 +48,7 @@ var verifyCmd = &cobra.Command{
 		s.Prefix = color.CyanString("Sending: ")
 		s.Start()
 
-		err = sendVerificationEmail(email)
+		err = helpers.SendVerificationEmail(email)
 		s.Stop()
 		if err != nil {
 			fmt.Println(color.RedString("Error sending verification email:"), err)
@@ -168,15 +60,16 @@ var verifyCmd = &cobra.Command{
 
 		s.Prefix = color.CyanString("Verifying: ")
 		s.Start()
-		token, err := waitForVerification(email)
+		token, err := helpers.WaitForVerification(email)
 		s.Stop()
 		if err != nil {
 			fmt.Println(color.RedString("Error during verification:"), err)
 			return
 		}
 
-		status = &UserStatus{Email: email, Token: token}
-		err = saveStatus(status)
+		expiry := time.Now().Add(30 * 24 * time.Hour).Unix() // Calculate expiry timestamp (30 days)
+		status = &helpers.UserStatus{Email: email, Token: token, Expiry: expiry}
+		err = helpers.SaveStatus(status)
 		if err != nil {
 			fmt.Println(color.RedString("Error saving status:"), err)
 			return
