@@ -93,14 +93,14 @@ genie do "prompt"
 - **AI-Powered Command Execution**: Execute commands using natural language prompts.
 - **Helpful for Beginners**: Ideal for beginners who may not be familiar with command-line syntax.
 
-### 2. `generate`
+### 2. `image`
 
-The `generate` command is used to generate images from text. This can be useful for generating any kind of image from text, such as diagrams, charts, or illustrations.
+The `image` command is used to generate images from text. This can be useful for generating any kind of image from text, such as diagrams, charts, or illustrations.
 
 **Usage:**
 
 ```bash
-genie generate "prompt"
+genie image "prompt"
 ```
 
 **Description:**

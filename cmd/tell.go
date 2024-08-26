@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
 
 	"github.com/harshalranjhani/genie/helpers"
@@ -20,7 +21,7 @@ func init() {
 var tellCmd = &cobra.Command{
 	Use:   "tell `prompt in quotes`",
 	Short: "This is a command to seek help from the genie.",
-	Long:  `Ask the genie about anything you need help with related to CLI issues and queries within UNIX or any other shell environment. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics.`,
+	Long:  `Ask the genie about anything you need help with related to CLI issues and queries within UNIX or any other shell environment. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics. The Operating System of the User is: ` + runtime.GOOS,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()

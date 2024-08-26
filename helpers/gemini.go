@@ -37,8 +37,8 @@ func GetGeminiCmdResponse(prompt string, safeOn bool) error {
 	}
 	defer client.Close()
 
-	// For text-only input, use the gemini-pro model
-	model := client.GenerativeModel("gemini-pro")
+	// For text-only input, use the gemini-1.5-pro model
+	model := client.GenerativeModel("gemini-1.5-pro")
 	if safeOn {
 		model.SafetySettings = []*genai.SafetySetting{
 			{
@@ -120,8 +120,8 @@ func GetGeminiGeneralResponse(prompt string, safeOn bool, includeDir bool) (stri
 	}
 	defer client.Close()
 
-	// For text-only input, use the gemini-pro model
-	model := client.GenerativeModel("gemini-pro")
+	// For text-only input, use the gemini-1.5-pro model
+	model := client.GenerativeModel("gemini-1.5-pro")
 	if safeOn {
 		model.SafetySettings = []*genai.SafetySetting{
 			{

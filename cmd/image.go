@@ -14,7 +14,7 @@ func init() {
 }
 
 var generateCmd = &cobra.Command{
-	Use:   "generate",
+	Use:   "image",
 	Short: "generate an image from a prompt",
 	Long:  `This command generates an image from a prompt using a Python script.`,
 	Run: func(cmd *cobra.Command, args []string) {
