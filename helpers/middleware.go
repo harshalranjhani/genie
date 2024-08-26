@@ -87,7 +87,19 @@ func SaveStatus(status *UserStatus) error {
 		return err
 	}
 
-	return os.WriteFile(statusFile, data, 0600)
+	tempFile := statusFile + ".temp"
+	err = os.WriteFile(tempFile, data, 0444) // write with read-only permissions
+	if err != nil {
+		return err
+	}
+
+	// Rename the temporary file to the actual status file
+	err = os.Rename(tempFile, statusFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func WaitForVerification(email string) (string, error) {
