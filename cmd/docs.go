@@ -16,12 +16,12 @@ var docsCmd = &cobra.Command{
 	Short: "open the documentation",
 	Long:  `Open the documentation in your default web browser.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		url := "https://genie.harshalranjhani.in/setup"
+		url := "https://docs.genie.harshalranjhani.in"
 		err := browser.OpenURL(url)
 		if err != nil {
 			fmt.Println("Failed to open URL:", err)
 		} else {
-			fmt.Println("Documentation: https://genie.harshalranjhani.in/setup")
+			fmt.Println("Documentation: https://docs.genie.harshalranjhani.in")
 		}
 	},
 }

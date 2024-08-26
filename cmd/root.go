@@ -39,7 +39,7 @@ func Execute() {
 		}
 		assets.PrintAscii()
 		fmt.Print(out.String())
-		color.Cyan("Additionally, you can visit https://genie.harshalranjhani.in/docs for a detailed documentation.")
+		color.Cyan("Additionally, you can visit https://docs.genie.harshalranjhani.in for a detailed documentation.")
 	})
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
