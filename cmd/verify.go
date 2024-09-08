@@ -7,7 +7,8 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/helpers"
+	"github.com/harshalranjhani/genie/middleware"
+	"github.com/harshalranjhani/genie/structs"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +20,7 @@ var verifyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		email := args[0]
 
-		status, err := helpers.LoadStatus()
+		status, err := middleware.LoadStatus()
 		if err != nil {
 			fmt.Println(color.RedString("Error loading status:"), err)
 			return
@@ -31,7 +32,7 @@ var verifyCmd = &cobra.Command{
 		} else if status != nil && status.Email != email {
 			fmt.Println(color.YellowString("A different user is already verified. Removing existing status..."))
 			// remove the status file
-			statusFile, err := helpers.GetStatusFilePath()
+			statusFile, err := middleware.GetStatusFilePath()
 			if err != nil {
 				fmt.Println(color.RedString("Error getting status file path:"), err)
 				return
@@ -48,7 +49,7 @@ var verifyCmd = &cobra.Command{
 		s.Prefix = color.CyanString("Sending: ")
 		s.Start()
 
-		err = helpers.SendVerificationEmail(email)
+		err = middleware.SendVerificationEmail(email)
 		s.Stop()
 		if err != nil {
 			fmt.Println(color.RedString("Error sending verification email:"), err)
@@ -60,7 +61,7 @@ var verifyCmd = &cobra.Command{
 
 		s.Prefix = color.CyanString("Verifying: ")
 		s.Start()
-		token, err := helpers.WaitForVerification(email)
+		token, err := middleware.WaitForVerification(email)
 		s.Stop()
 		if err != nil {
 			fmt.Println(color.RedString("Error during verification:"), err)
@@ -68,8 +69,8 @@ var verifyCmd = &cobra.Command{
 		}
 
 		expiry := time.Now().Add(30 * 24 * time.Hour).Unix() // Calculate expiry timestamp (30 days)
-		status = &helpers.UserStatus{Email: email, Token: token, Expiry: expiry}
-		err = helpers.SaveStatus(status)
+		status = &structs.UserStatus{Email: email, Token: token, Expiry: expiry}
+		err = middleware.SaveStatus(status)
 		if err != nil {
 			fmt.Println(color.RedString("Error saving status:"), err)
 			return

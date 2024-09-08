@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/structs"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -86,14 +87,7 @@ var musicCmd = &cobra.Command{
 			return
 		}
 
-		var response struct {
-			Status string `json:"status"`
-			Logs   string `json:"logs"`
-			URLs   struct {
-				Get string `json:"get"`
-			} `json:"urls"`
-			Output string `json:"output,omitempty"`
-		}
+		var response structs.ReplicateMusicResponse
 
 		if err := json.Unmarshal(body, &response); err != nil {
 			fmt.Println("Error parsing JSON")

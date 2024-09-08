@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/harshalranjhani/genie/helpers"
+	"github.com/harshalranjhani/genie/helpers/llm"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -31,13 +31,13 @@ var generateCmd = &cobra.Command{
 		prompt := args[0]
 		switch engineName {
 		case GPTEngine:
-			filePath, err := helpers.GenerateGPTImage(prompt)
+			filePath, err := llm.GenerateGPTImage(prompt)
 			if err != nil {
 				return
 			}
 			fmt.Println("Image generated:", filePath)
 		case GeminiEngine:
-			filePath, err := helpers.GenerateGeminiImage(prompt)
+			filePath, err := llm.GenerateGeminiImage(prompt)
 			if err != nil {
 				fmt.Println("Error:", err)
 				return

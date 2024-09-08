@@ -1,4 +1,4 @@
-package helpers
+package middleware
 
 import (
 	"bytes"
@@ -11,14 +11,9 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/gorilla/websocket"
+	"github.com/harshalranjhani/genie/structs"
 	"github.com/spf13/cobra"
 )
-
-type UserStatus struct {
-	Email  string `json:"email"`
-	Token  string `json:"token"`
-	Expiry int64  `json:"expiry"`
-}
 
 func GetStatusFilePath() (string, error) {
 	homeDir, err := os.UserHomeDir()
@@ -35,7 +30,7 @@ func GetStatusFilePath() (string, error) {
 	return filepath.Join(configDir, "user_status.json"), nil
 }
 
-func LoadStatus() (*UserStatus, error) {
+func LoadStatus() (*structs.UserStatus, error) {
 	statusFile, err := GetStatusFilePath()
 	if err != nil {
 		return nil, err
@@ -50,7 +45,7 @@ func LoadStatus() (*UserStatus, error) {
 		return nil, err
 	}
 
-	var status UserStatus
+	var status structs.UserStatus
 	err = json.Unmarshal(data, &status)
 	if err != nil {
 		return nil, err
@@ -76,7 +71,7 @@ func SendVerificationEmail(email string) error {
 	return nil
 }
 
-func SaveStatus(status *UserStatus) error {
+func SaveStatus(status *structs.UserStatus) error {
 	statusFile, err := GetStatusFilePath()
 	if err != nil {
 		return err

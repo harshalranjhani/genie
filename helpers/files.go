@@ -155,15 +155,6 @@ func GenerateMarkdown(headings []structs.Heading, fileName string) {
 	fmt.Println("Markdown file generated successfully!")
 }
 
-type MailObj struct {
-	Email    string            `json:"email"`
-	Headings []structs.Heading `json:"headings"`
-}
-
-type MailRequest struct {
-	MailObj MailObj `json:"mailObj"`
-}
-
 func SendMarkdownFileToEmail(email string, headings []structs.Heading) error {
 
 	// if headings is empty, return an error
@@ -174,8 +165,8 @@ func SendMarkdownFileToEmail(email string, headings []structs.Heading) error {
 
 	fmt.Println("Sending email...")
 	// Prepare the request payload
-	mailRequest := MailRequest{
-		MailObj: MailObj{
+	mailRequest := structs.MailRequest{
+		MailObj: structs.MailObj{
 			Email:    email,
 			Headings: headings,
 		},

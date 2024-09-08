@@ -30,3 +30,27 @@ type Heading struct {
 	Content     string
 	Subheadings []Subheading
 }
+
+type ReplicateMusicResponse struct {
+	Status string `json:"status"`
+	Logs   string `json:"logs"`
+	URLs   struct {
+		Get string `json:"get"`
+	} `json:"urls"`
+	Output string `json:"output,omitempty"`
+}
+
+type MailObj struct {
+	Email    string    `json:"email"`
+	Headings []Heading `json:"headings"`
+}
+
+type MailRequest struct {
+	MailObj MailObj `json:"mailObj"`
+}
+
+type UserStatus struct {
+	Email  string `json:"email"`
+	Token  string `json:"token"`
+	Expiry int64  `json:"expiry"`
+}

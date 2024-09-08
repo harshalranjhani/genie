@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/harshalranjhani/genie/helpers"
+	"github.com/harshalranjhani/genie/helpers/llm"
+	"github.com/harshalranjhani/genie/helpers/prompts"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -50,76 +52,16 @@ var tellCmd = &cobra.Command{
 			}
 			var sb strings.Builder
 			helpers.PrintData(&sb, rootDir, 0)
-			prompt = fmt.Sprintf(
-				"Context: You are an intelligent CLI tool named Genie, designed to understand and execute file system operations based on the current state of the user's directory and explicit instructions provided. Please provide assistance strictly related to command-line interface (CLI) issues and queries within UNIX or any other shell environment and any other thing related to the field of Computer Science. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics.\n\n"+
-					"Also, if someone asks about what all you can do other than this, here is the help command for genie:\n"+
-					"Usage:\n"+
-					"  genie [command]\n\n"+
-					"Available Commands:\n"+
-					"  [chat]       Start a chat with the genie and maintain a conversation.\n"+
-					"  [completion] Generate the autocompletion script for the specified shell.\n"+
-					"  [do]        Command the genie to do something.\n"+
-					"  [docs]      Open the documentation.\n"+
-					"  [document] Document your code with genie.\n"+
-					"  [engine]    Get the current engine being used by genie.\n"+
-					"  [generate]  Generate an image from a prompt.\n"+
-					"  [greet]     Invoke the wise Genie for CLI guidance.\n"+
-					"  [init]      Store your API keys securely in the system keychain.\n"+
-					"  [music]     Generate music from text!\n"+
-					"  [reset]     Reset your API keys.\n"+
-					"  [scrape]    Scrape data from a URL, supports pagination!\n"+
-					"  [summarize] Get a markdown summary of the current directory comments.\n"+
-					"  [support]   Support the tool by donating to the project.\n"+
-					"  [switch]    Switch between different engines (Gemini, GPT).\n"+
-					"  [tell]      This is a command to seek help from the genie.\n"+
-					"  [verify]    Verify your support status and get access to extra features.\n"+
-					"  [version]   Get the current version of genie.\n\n"+
-					"Flags:\n"+
-					"  -h, --help   help for genie\n\n"+
-					"Use \"genie [command] --help\" for more information about a command.\n"+
-					"Additionally, you can visit https://genie.harshalranjhani.in/docs for a detailed documentation.\n\n"+
-					"Here's what the user is asking: %s\n"+
-					"The user has also provided the current directory's snapshot:\n\n"+
-					"Current Directory Snapshot:\n"+
-					"---------------------------\n"+
-					"%s. Use it if required.", args[0], sb.String())
+			prompt = prompts.GetTellPrompt(args[0], sb)
 		} else {
-			prompt = fmt.Sprintf(
-				"Context: You are an intelligent CLI tool named Genie, designed to understand and execute file system operations based on the current state of the user's directory and explicit instructions provided. Please provide assistance strictly related to command-line interface (CLI) issues and queries within UNIX or any other shell environment and any other thing related to the field of Computer Science. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics.\n\n"+
-					"Also, if someone asks about what all you can do other than this, here is the help command for genie:\n"+
-					"Usage:\n"+
-					"  genie [command]\n\n"+
-					"Available Commands:\n"+
-					"  [chat]       Start a chat with the genie and maintain a conversation.\n"+
-					"  [completion] Generate the autocompletion script for the specified shell.\n"+
-					"  [do]        Command the genie to do something.\n"+
-					"  [docs]      Open the documentation.\n"+
-					"  [document] Document your code with genie.\n"+
-					"  [engine]    Get the current engine being used by genie.\n"+
-					"  [generate]  Generate an image from a prompt.\n"+
-					"  [greet]     Invoke the wise Genie for CLI guidance.\n"+
-					"  [init]      Store your API keys securely in the system keychain.\n"+
-					"  [music]     Generate music from text!\n"+
-					"  [reset]     Reset your API keys.\n"+
-					"  [scrape]    Scrape data from a URL, supports pagination!\n"+
-					"  [summarize] Get a markdown summary of the current directory comments.\n"+
-					"  [support]   Support the tool by donating to the project.\n"+
-					"  [switch]    Switch between different engines (Gemini, GPT).\n"+
-					"  [tell]      This is a command to seek help from the genie.\n"+
-					"  [verify]    Verify your support status and get access to extra features.\n"+
-					"  [version]   Get the current version of genie.\n\n"+
-					"Flags:\n"+
-					"  -h, --help   help for genie\n\n"+
-					"Use \"genie [command] --help\" for more information about a command.\n"+
-					"Additionally, you can visit https://genie.harshalranjhani.in/docs for detailed documentation.\n\n"+
-					"Here's what the user is asking: %s", args[0])
+			prompt = prompts.GetTellPrompt(args[0], strings.Builder{})
 		}
 
 		switch engineName {
 		case GPTEngine:
-			helpers.GetGPTGeneralResponse(prompt, includeDir)
+			llm.GetGPTGeneralResponse(prompt, includeDir)
 		case GeminiEngine:
-			strResp, err := helpers.GetGeminiGeneralResponse(prompt, true, includeDir)
+			strResp, err := llm.GetGeminiGeneralResponse(prompt, true, includeDir)
 			if err != nil {
 				log.Fatal("Error getting response from Gemini: ", err)
 				os.Exit(1)

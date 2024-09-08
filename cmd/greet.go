@@ -5,7 +5,8 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/helpers"
+	"github.com/harshalranjhani/genie/helpers/llm"
+	"github.com/harshalranjhani/genie/helpers/prompts"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -24,9 +25,9 @@ Whether you're navigating complex commands or seeking general guidance, the Geni
 	Run: func(cmd *cobra.Command, args []string) {
 		var prompt string
 		if len(args) > 0 {
-			prompt = "Imagine you are an ancient and wise genie, residing not in a lamp, but within the heart of a powerful computer's Command Line Interface (CLI). After centuries of slumber, a user awakens you with a command. They greet you with a specific request: \"" + args[0] + "\". As a genie, your ancient wisdom is sought to navigate the complexities of the CLI more efficiently. Respond with a greeting that reflects your vast knowledge and eagerness to assist in the digital realm, and provide a one-liner of sage advice tailored to their request."
+			prompt = prompts.GetGreetPrompt(args[0])
 		} else {
-			prompt = "Imagine you are an ancient and wise genie, residing not in a lamp, but within the heart of a powerful computer's Command Line Interface (CLI). After centuries of slumber, a user awakens you with a command, seeking your ancient wisdom to navigate the complexities of the CLI more efficiently. They might say something like 'Hello, Genie, how can I list all files in this directory?' Respond with a greeting that reflects your vast knowledge and eagerness to assist in the digital realm, and provide a one-liner of sage advice for smarter CLI usage."
+			prompt = prompts.GetGreetPrompt("")
 		}
 
 		engineName, err := keyring.Get(serviceName, "engineName")
@@ -37,9 +38,9 @@ Whether you're navigating complex commands or seeking general guidance, the Geni
 		c := color.New(color.FgRed)
 		switch engineName {
 		case GPTEngine:
-			helpers.GetGPTGeneralResponse(prompt, false)
+			llm.GetGPTGeneralResponse(prompt, false)
 		case GeminiEngine:
-			strResp, err := helpers.GetGeminiGeneralResponse(prompt, true, false)
+			strResp, err := llm.GetGeminiGeneralResponse(prompt, true, false)
 			if err != nil {
 				log.Fatal("Error getting response from Gemini: ", err)
 				os.Exit(1)

@@ -8,6 +8,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/harshalranjhani/genie/helpers"
+	"github.com/harshalranjhani/genie/helpers/llm"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -42,7 +43,7 @@ var documentCmd = &cobra.Command{
 
 		switch engineName {
 		case GPTEngine:
-			err := helpers.DocumentCodeWithGPT(filePath)
+			err := llm.DocumentCodeWithGPT(filePath)
 			if err != nil {
 				log.Fatalf("Failed to document code: %v", err)
 			}

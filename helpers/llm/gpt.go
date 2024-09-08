@@ -1,17 +1,22 @@
-package helpers
+package llm
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"image/png"
 	"io"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/helpers"
 	"github.com/sashabaranov/go-openai"
 	"github.com/zalando/go-keyring"
 )
@@ -113,7 +118,7 @@ func GetGPTCmdResponse(prompt string, safeOn bool) error {
 
 	s.Stop()
 	fmt.Println("Running the command: ", command)
-	RunCommand(command)
+	helpers.RunCommand(command)
 
 	return nil
 }
@@ -226,4 +231,83 @@ func formatMarkdownToPlainText(mdText string) string {
 	plainText = reHeaders.ReplaceAllString(plainText, "\n$1\n")
 
 	return plainText
+}
+
+func GenerateGPTImage(prompt string) (string, error) {
+	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("Generating Image: ")
+	s.Start()
+
+	openAIKey, err := keyring.Get("genie", "openai_api_key")
+	if err != nil {
+		s.Stop()
+		fmt.Println("OpenAI API key not found in keyring. Please run `genie init` to store the key.")
+		return "", err
+	}
+	c := openai.NewClient(openAIKey)
+	ctx := context.Background()
+
+	// reqUrl := openai.ImageRequest{
+	// 	Prompt:         prompt,
+	// 	Size:           openai.CreateImageSize256x256,
+	// 	ResponseFormat: openai.CreateImageResponseFormatURL,
+	// 	N:              1,
+	// }
+	// respUrl, err := c.CreateImage(ctx, reqUrl)
+	// if err != nil {
+	// 	s.Stop()
+	// 	fmt.Printf("Image creation error: %v\n", err)
+	// 	return "", err
+	// }
+	// fmt.Println(respUrl.Data[0].URL)
+
+	reqBase64 := openai.ImageRequest{
+		Prompt:         prompt,
+		Size:           openai.CreateImageSize256x256,
+		ResponseFormat: openai.CreateImageResponseFormatB64JSON,
+		N:              1,
+	}
+
+	respBase64, err := c.CreateImage(ctx, reqBase64)
+	if err != nil {
+		s.Stop()
+		fmt.Printf("Image creation error: %v\n", err)
+		return "", err
+	}
+
+	imgBytes, err := base64.StdEncoding.DecodeString(respBase64.Data[0].B64JSON)
+	if err != nil {
+		s.Stop()
+		fmt.Printf("Base64 decode error: %v\n", err)
+		return "", err
+	}
+
+	r := bytes.NewReader(imgBytes)
+	imgData, err := png.Decode(r)
+	if err != nil {
+		s.Stop()
+		fmt.Printf("PNG decode error: %v\n", err)
+		return "", err
+	}
+
+	prompt = strings.Replace(prompt, " ", "_", -1)
+	filename := fmt.Sprintf("%s.png", prompt)
+
+	file, err := os.Create(filename)
+	if err != nil {
+		s.Stop()
+		fmt.Printf("File creation error: %v\n", err)
+		return "", err
+	}
+	defer file.Close()
+
+	if err := png.Encode(file, imgData); err != nil {
+		s.Stop()
+		fmt.Printf("PNG encode error: %v\n", err)
+		return "", err
+	}
+
+	s.Stop()
+
+	return filename, nil
 }
