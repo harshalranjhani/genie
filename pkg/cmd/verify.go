@@ -7,8 +7,8 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/middleware"
-	"github.com/harshalranjhani/genie/structs"
+	"github.com/harshalranjhani/genie/internal/middleware"
+	"github.com/harshalranjhani/genie/internal/structs"
 	"github.com/spf13/cobra"
 )
 

@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/helpers"
-	"github.com/harshalranjhani/genie/structs"
+	"github.com/harshalranjhani/genie/internal/helpers"
+	"github.com/harshalranjhani/genie/internal/structs"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )

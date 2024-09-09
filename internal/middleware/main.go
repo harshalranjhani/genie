@@ -11,7 +11,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/gorilla/websocket"
-	"github.com/harshalranjhani/genie/structs"
+	"github.com/harshalranjhani/genie/internal/structs"
 	"github.com/spf13/cobra"
 )
 

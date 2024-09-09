@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/structs"
+	"github.com/harshalranjhani/genie/internal/structs"
 	"github.com/zalando/go-keyring"
 )
 

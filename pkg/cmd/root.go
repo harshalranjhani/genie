@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/assets"
+	"github.com/harshalranjhani/genie/pkg/assets"
 	"github.com/spf13/cobra"
 )
 

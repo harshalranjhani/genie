@@ -12,7 +12,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/google/generative-ai-go/genai"
-	"github.com/harshalranjhani/genie/middleware"
+	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 	"google.golang.org/api/option"

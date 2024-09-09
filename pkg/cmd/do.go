@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/helpers"
-	"github.com/harshalranjhani/genie/helpers/llm"
-	"github.com/harshalranjhani/genie/helpers/prompts"
+	"github.com/harshalranjhani/genie/internal/helpers"
+	"github.com/harshalranjhani/genie/internal/helpers/llm"
+	"github.com/harshalranjhani/genie/pkg/prompts"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )

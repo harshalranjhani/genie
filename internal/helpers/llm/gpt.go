@@ -16,7 +16,8 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/helpers"
+	"github.com/harshalranjhani/genie/internal/helpers"
+	"github.com/harshalranjhani/genie/pkg/prompts"
 	"github.com/sashabaranov/go-openai"
 	"github.com/zalando/go-keyring"
 )
@@ -159,22 +160,7 @@ func DocumentCodeWithGPT(filePath string) error {
 	client := openai.NewClient(openAIKey)
 	ctx := context.Background()
 
-	prompt := fmt.Sprintf(`Document the following code with Genie comments. 
-Genie comments provide clear, structured headings and subheadings for the code to enhance readability and provide detailed documentation. 
-Use Genie comments to explain the purpose, functionality, and usage of each part of the code. The format for genie comments is as follows:
-In python:
-
-# genie:heading: This is a heading
-# genie:subheading: This is a subheading
-
-or in javascript:
-
-// genie:heading: This is a heading
-// genie:subheading: This is a subheading
-
-Make sure to match the exact format for the comments to be detected correctly. The format is genie:heading: for headings and genie:subheading: for subheadings. Remember to add a space after the colon and before the text. Also add a space after the comment marker (# or //) and before the genie keyword. Remember there cannot be multiple genie headings in one file, but there can be multiple genie subheadings under one heading.
-Here is the code:
-%s\nRemember to output the whole code including all imports, exports, functions, tests, etc. You are supposed to add genie comments wherever necessary and then return the whole code. Give the output as code only, no other text is required.`, content)
+	prompt := prompts.GetDocumentPrompt(string(content))
 
 	req := openai.ChatCompletionRequest{
 		Model: "gpt-4o-mini",

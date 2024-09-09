@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/harshalranjhani/genie/helpers/llm"
+	"github.com/harshalranjhani/genie/internal/helpers/llm"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
