@@ -357,7 +357,6 @@ func GenerateReadmeWithGPT(readmePath string, templateName string) error {
 	}
 
 	generatedText := resp.Choices[0].Message.Content
-	fmt.Println("Generated Text: ", generatedText)
 
 	if err := helpers.ProcessTemplateResponse(templateName, generatedText, readmePath); err != nil {
 		return fmt.Errorf("failed to process template response: %w", err)
