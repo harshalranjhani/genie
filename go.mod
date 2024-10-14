@@ -22,6 +22,7 @@ require (
 	github.com/alessio/shellescape v1.4.2 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/briandowns/spinner v1.23.1 // indirect
+	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be // indirect
 	github.com/danieljoos/wincred v1.2.1 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect

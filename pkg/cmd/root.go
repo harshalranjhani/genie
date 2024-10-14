@@ -6,8 +6,8 @@ import (
 	"html/template"
 	"os"
 
+	"github.com/common-nighthawk/go-figure"
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/pkg/assets"
 	"github.com/spf13/cobra"
 )
 
@@ -37,7 +37,16 @@ func Execute() {
 			fmt.Println(err)
 			return
 		}
-		assets.PrintAscii()
+
+		myFigure := figure.NewFigure("genie", "", true)
+		asciiArt := myFigure.String()
+
+		lines := bytes.Split([]byte(asciiArt), []byte("\n"))
+		for _, line := range lines {
+			c := color.New(color.FgCyan)
+			c.Println(string(line))
+		}
+
 		fmt.Print(out.String())
 		color.Cyan("Additionally, you can visit https://docs.genie.harshalranjhani.in for a detailed documentation.")
 	})
