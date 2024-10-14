@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -296,4 +297,71 @@ func GenerateGPTImage(prompt string) (string, error) {
 	s.Stop()
 
 	return filename, nil
+}
+
+func GenerateReadmeWithGPT(readmePath string, templateName string) error {
+	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
+	rootDir, err := helpers.GetCurrentDirectoriesAndFiles(cwd)
+	if err != nil {
+		return fmt.Errorf("failed to get directory structure: %w", err)
+	}
+	s.Prefix = color.HiCyanString("Generating README: ")
+	s.Start()
+	defer s.Stop()
+
+	var repoData strings.Builder
+	helpers.PrintData(&repoData, rootDir, 0)
+
+	sanitizedRepoData := helpers.SanitizeUTF8(repoData.String())
+
+	// get project name from root folder name
+	projectName := filepath.Base(cwd)
+
+	prompt := prompts.GetReadmePrompt(sanitizedRepoData, templateName, projectName)
+
+	openAIKey, err := keyring.Get("genie", "openai_api_key")
+	if err != nil {
+		return fmt.Errorf("OpenAI API key not found in keyring: please run `genie init` to store the key: %w", err)
+	}
+
+	client := openai.NewClient(openAIKey)
+	ctx := context.Background()
+
+	req := openai.ChatCompletionRequest{
+		Model: "gpt-4o-mini",
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: "You are a helpful assistant who generates README files.",
+			},
+			{
+				Role:    openai.ChatMessageRoleUser,
+				Content: prompt,
+			},
+		},
+	}
+
+	resp, err := client.CreateChatCompletion(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to create chat completion: %w", err)
+	}
+
+	if len(resp.Choices) == 0 {
+		return errors.New("no response from OpenAI API")
+	}
+
+	generatedText := resp.Choices[0].Message.Content
+	fmt.Println("Generated Text: ", generatedText)
+
+	if err := helpers.ProcessTemplateResponse(templateName, generatedText, readmePath); err != nil {
+		return fmt.Errorf("failed to process template response: %w", err)
+	}
+
+	return nil
 }

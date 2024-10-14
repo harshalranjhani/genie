@@ -89,3 +89,30 @@ Make sure to match the exact format for the comments to be detected correctly. T
 Here is the code:
 %s\nRemember to output the whole code including all imports, exports, functions, tests, etc. You are supposed to add genie comments wherever necessary and then return the whole code. Give the output as code only, no other text is required.`, content)
 }
+
+func GetReadmePrompt(repoData string, templateName string, projectName string) string {
+	return fmt.Sprintf(`
+Generate a comprehensive README for the given repository named %s.
+The repository data is provided below.
+
+Repository Data:
+%s
+
+Please provide the README content strictly in JSON format. Do not include any additional text or explanations. The JSON should include the following keys:
+- template %s
+- projectName %s
+- description
+- installation
+- usage
+- contributing
+- license
+- features (for detailed template)
+- prerequisites (for detailed template)
+- configuration (for detailed template)
+- testing (for detailed template)
+- deployment (for detailed template)
+- acknowledgements (for detailed template)
+
+Ensure that the output is a valid JSON object and contains only the specified keys and their corresponding values.
+`, projectName, repoData, templateName, projectName)
+}

@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -15,6 +17,7 @@ import (
 	"github.com/google/generative-ai-go/genai"
 	"github.com/harshalranjhani/genie/internal/helpers"
 	"github.com/harshalranjhani/genie/internal/structs"
+	"github.com/harshalranjhani/genie/pkg/prompts"
 	"github.com/joho/godotenv"
 	"github.com/zalando/go-keyring"
 	"google.golang.org/api/option"
@@ -114,8 +117,7 @@ func GetGeminiGeneralResponse(prompt string, safeOn bool, includeDir bool) (stri
 	geminiKey, err := keyring.Get("genie", "gemini_api_key")
 	if err != nil {
 		s.Stop()
-		fmt.Println("Gemini API key not found in keyring. Please run `genie init` to store the key.")
-		os.Exit(1)
+		return "", fmt.Errorf("gemini API key not found in keyring: please run `genie init` to store the key: %w", err)
 	}
 	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiKey))
 	if err != nil {
@@ -229,4 +231,64 @@ func GenerateGeminiImage(prompt string) (string, error) {
 	s.Stop()
 
 	return filename, nil
+}
+
+func GenerateReadmeWithGemini(readmePath string, templateName string) error {
+	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
+	rootDir, err := helpers.GetCurrentDirectoriesAndFiles(cwd)
+	if err != nil {
+		return fmt.Errorf("failed to get directory structure: %w", err)
+	}
+	s.Prefix = color.HiCyanString("Generating README: ")
+	s.Start()
+	defer s.Stop()
+
+	var repoData strings.Builder
+	helpers.PrintData(&repoData, rootDir, 0)
+
+	sanitizedRepoData := helpers.SanitizeUTF8(repoData.String())
+
+	// get project name from root folder name
+	projectName := filepath.Base(cwd)
+
+	prompt := prompts.GetReadmePrompt(sanitizedRepoData, templateName, projectName)
+
+	geminiKey, err := keyring.Get("genie", "gemini_api_key")
+	if err != nil {
+		return fmt.Errorf("gemini API key not found in keyring: please run `genie init` to store the key: %w", err)
+	}
+
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiKey))
+	if err != nil {
+		return fmt.Errorf("failed to create Gemini client: %w", err)
+	}
+	defer client.Close()
+
+	model := client.GenerativeModel("gemini-1.5-pro")
+	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
+	if err != nil {
+		return err
+	}
+
+	var genResp structs.GenResponse
+	respJSON, _ := json.MarshalIndent(resp, "", "  ")
+	if err := json.Unmarshal(respJSON, &genResp); err != nil {
+		return fmt.Errorf("failed to parse Gemini response: %w", err)
+	}
+
+	if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
+		generatedText := genResp.Candidates[0].Content.Parts[0]
+		if err := helpers.ProcessTemplateResponse(templateName, generatedText, readmePath); err != nil {
+			return fmt.Errorf("failed to process template response: %w", err)
+		}
+	}
+
+	return nil
 }
