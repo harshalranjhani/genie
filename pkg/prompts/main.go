@@ -99,20 +99,20 @@ Repository Data:
 %s
 
 Please provide the README content strictly in JSON format. Do not include any additional text or explanations. The JSON should include the following keys:
-- template %s
 - projectName %s
 - description
 - installation
 - usage
 - contributing
 - license
-- features (for detailed template)
-- prerequisites (for detailed template)
-- configuration (for detailed template)
-- testing (for detailed template)
-- deployment (for detailed template)
-- acknowledgements (for detailed template)
+- features
+- prerequisites
+- configuration
+- testing
+- deployment
+- acknowledgements
+- githubUsername
 
 Ensure that the output is a valid JSON object and contains only the specified keys and their corresponding values.
-`, projectName, repoData, templateName, projectName)
+`, projectName, repoData, projectName)
 }

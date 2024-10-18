@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/harshalranjhani/genie/internal/helpers/llm"
+	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -15,7 +16,7 @@ var templateName string
 var readmeFileName string
 
 func init() {
-	readmeCmd.Flags().StringVarP(&templateName, "template", "t", "default", "Specify the template to use for generating the README (default, minimal, detailed)")
+	readmeCmd.Flags().StringVarP(&templateName, "template", "t", "default", "Specify the template to use for generating the README (default, minimal, detailed, animated, interactive)")
 	readmeCmd.Flags().StringVarP(&readmeFileName, "filename", "f", "README.md", "Specify the name of the README file to generate")
 	rootCmd.AddCommand(readmeCmd)
 }
@@ -24,6 +25,13 @@ var readmeCmd = &cobra.Command{
 	Use:   "readme",
 	Short: "Generate README.md for the current directory",
 	Long:  `This command generates a README file for your project. You can select from a list of templates or use the default template, and specify the output filename.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		if templateName == "animated" || templateName == "interactive" {
+			if err := middleware.VerifySubscriptionMiddleware(cmd, args); err != nil {
+				log.Fatal(err)
+			}
+		}
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		engineName, err := keyring.Get(serviceName, "engineName")
 		if err != nil {
