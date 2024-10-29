@@ -76,18 +76,17 @@ var detailedTemplate = `# {{.projectName}}
 `
 
 func GetReadmeTemplate(templateName string) string {
-	status, err := middleware.LoadStatus()
-	if err != nil {
-		return defaultTemplate
-	}
-	token := status.Token
 	switch templateName {
 	case "minimal":
 		return minimalTemplate
 	case "detailed":
 		return detailedTemplate
 	case "animated", "interactive":
-		return getProReadmeTemplate(templateName, token)
+		status, err := middleware.LoadStatus()
+		if err != nil || status == nil {
+			return defaultTemplate
+		}
+		return getProReadmeTemplate(templateName, status.Token)
 	default:
 		return defaultTemplate
 	}
