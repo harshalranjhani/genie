@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/harshalranjhani/genie/internal/helpers"
 	"github.com/harshalranjhani/genie/internal/helpers/llm"
 	"github.com/harshalranjhani/genie/pkg/prompts"
@@ -18,6 +19,7 @@ import (
 func init() {
 	rootCmd.AddCommand(tellCmd)
 	tellCmd.PersistentFlags().Bool("include-dir", false, "Option to include the current directory snapshot in the request.")
+	tellCmd.PersistentFlags().Bool("include-git-changes", false, "Option to include git repository information in the request.")
 }
 
 var tellCmd = &cobra.Command{
@@ -31,31 +33,42 @@ var tellCmd = &cobra.Command{
 		}
 
 		includeDir, _ := cmd.Flags().GetBool("include-dir")
+		includeGit, _ := cmd.Flags().GetBool("include-git-changes")
 
 		var prompt string
+		var sb strings.Builder
 
 		engineName, err := keyring.Get(serviceName, "engineName")
 		if err != nil {
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
+		dir, err := os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+
 		if includeDir {
-			dir, err := os.Getwd()
-			if err != nil {
-				log.Fatal(err)
-				os.Exit(1)
-			}
 			rootDir, err := helpers.GetCurrentDirectoriesAndFiles(dir)
 			if err != nil {
 				log.Fatal(err)
 				os.Exit(1)
 			}
-			var sb strings.Builder
 			helpers.PrintData(&sb, rootDir, 0)
-			prompt = prompts.GetTellPrompt(args[0], sb)
-		} else {
-			prompt = prompts.GetTellPrompt(args[0], strings.Builder{})
 		}
+
+		if includeGit {
+			gitInfo, err := helpers.GetGitInfo(dir)
+			if err != nil {
+				color.Red("Warning: Could not get git information: %v", err)
+			} else {
+				sb.WriteString("\nGit Repository Information:\n")
+				sb.WriteString(gitInfo)
+			}
+		}
+
+		prompt = prompts.GetTellPrompt(args[0], sb)
 
 		switch engineName {
 		case GPTEngine:
