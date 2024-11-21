@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
+	"github.com/briandowns/spinner"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -20,41 +23,35 @@ var keys = map[int]string{
 }
 
 func resetKey(keyName string) {
-	if err := keyring.Delete(serviceName, keyName); err != nil {
-		fmt.Printf("Failed to delete %s: %s\n", keyName, err)
+	s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+	s.Suffix = color.YellowString(" Removing %s...", keyName)
+	s.Start()
+	time.Sleep(500 * time.Millisecond)
+
+	err := keyring.Delete(serviceName, keyName)
+	s.Stop()
+
+	if err != nil {
+		color.Red("✘ Failed to delete %s: %s\n", keyName, err)
 	} else {
-		fmt.Printf("%s has been deleted.\n", keyName)
+		color.Green("✔ Successfully deleted %s\n", keyName)
 	}
 }
+
 func resetKeys() {
-	if err := keyring.Delete(serviceName, openAIKeyName); err != nil {
-		fmt.Printf("Failed to delete %s: %s\n", openAIKeyName, err)
-	} else {
-		fmt.Printf("%s has been deleted.\n", openAIKeyName)
-	}
+	s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+	s.Suffix = color.YellowString(" Removing all keys...")
+	s.Start()
+	time.Sleep(500 * time.Millisecond)
+	s.Stop()
 
-	if err := keyring.Delete(serviceName, geminiKeyName); err != nil {
-		fmt.Printf("Failed to delete %s: %s\n", geminiKeyName, err)
-	} else {
-		fmt.Printf("%s has been deleted.\n", geminiKeyName)
-	}
-
-	if err := keyring.Delete(serviceName, ssidKeyName); err != nil {
-		fmt.Printf("Failed to delete %s: %s\n", ssidKeyName, err)
-	} else {
-		fmt.Printf("%s has been deleted.\n", ssidKeyName)
-	}
-
-	if err := keyring.Delete(serviceName, ignoreListPathKeyName); err != nil {
-		fmt.Printf("Failed to delete %s: %s\n", ssidKeyName, err)
-	} else {
-		fmt.Printf("%s has been deleted.\n", ssidKeyName)
-	}
-
-	if err := keyring.Delete(serviceName, replicateKeyName); err != nil {
-		fmt.Printf("Failed to delete %s: %s\n", replicateKeyName, err)
-	} else {
-		fmt.Printf("%s has been deleted.\n", replicateKeyName)
+	keys := []string{openAIKeyName, geminiKeyName, ssidKeyName, ignoreListPathKeyName, replicateKeyName}
+	for _, key := range keys {
+		if err := keyring.Delete(serviceName, key); err != nil {
+			color.Red("✘ Failed to delete %s: %s\n", key, err)
+		} else {
+			color.Green("✔ Successfully deleted %s\n", key)
+		}
 	}
 }
 
@@ -64,61 +61,100 @@ func init() {
 
 var resetCmd = &cobra.Command{
 	Use:   "reset",
-	Short: "Reset your API keys.",
-	Long:  `Reset your API keys.`,
+	Short: "Reset your API keys",
+	Long: color.YellowString(`
+🔄 Genie Reset Wizard
+--------------------
+This wizard will help you reset and update your API keys stored in the system keychain.
+You can choose to reset individual keys or all of them at once.
+`),
 	Run: func(cmd *cobra.Command, args []string) {
 		scanner := bufio.NewScanner(os.Stdin)
 		for {
-			fmt.Println("\n--- API Key Reset Menu ---")
-			fmt.Println("Please select an option:")
-			fmt.Println("1: Reset OpenAI API Key")
-			fmt.Println("2: Reset Gemini API Key")
-			fmt.Println("3: Reset SSID")
-			fmt.Println("4: Reset Ignore List Path")
-			fmt.Println("5: Reset Replicate API Key")
-			fmt.Println("6: Reset All Keys")
-			fmt.Println("0: Exit")
-			fmt.Print("Your choice: ")
+			fmt.Println(color.CyanString("\n🔑 API Key Reset Menu"))
+			fmt.Println(color.HiBlackString("──────────────────────"))
+			options := map[string]string{
+				"1": "Reset OpenAI API Key 🤖",
+				"2": "Reset Gemini API Key 🧞",
+				"3": "Reset SSID 🔐",
+				"4": "Reset Ignore List Path 📝",
+				"5": "Reset Replicate API Key 🔄",
+				"6": "Reset All Keys ⚠️",
+				"0": "Exit 👋",
+			}
+
+			for num, text := range options {
+				if num == "0" {
+					fmt.Println(color.HiBlackString("──────────────────────"))
+				}
+				fmt.Printf("%s: %s\n", color.HiYellowString(num), text)
+			}
+
+			fmt.Print(color.CyanString("\n➜ Your choice: "))
 			scanner.Scan()
 			userResponse := scanner.Text()
 			choice, err := strconv.Atoi(userResponse)
 
 			if err != nil || choice < 0 || choice > len(keys) {
-				fmt.Println("Invalid choice")
+				color.Red("❌ Invalid choice! Please try again.")
 				continue
 			}
 			if choice == 0 {
-				fmt.Println("Exiting...")
+				color.Cyan("👋 Goodbye!")
 				break
 			}
 
 			keyName := keys[choice]
 			if keyName == "all" {
-				resetKeys()
-				return
-			}
-			resetKey(keyName)
-
-			var prompt string
-			switch keyName {
-			case openAIKeyName:
-				prompt = "Enter your OpenAI API Key:"
-			case geminiKeyName:
-				prompt = "Enter your Gemini API Key:"
-			case ssidKeyName:
-				prompt = "Enter the SSID key:"
-			case ignoreListPathKeyName:
-				prompt = "Enter the path to the ignore list file:"
-			case replicateKeyName:
-				prompt = "Enter your Replicate API Key:"
-			default:
+				fmt.Print(color.YellowString("⚠️  Are you sure you want to reset all keys? (y/N): "))
+				scanner.Scan()
+				confirm := scanner.Text()
+				if confirm == "y" || confirm == "Y" {
+					resetKeys()
+					color.Yellow("\n🔄 Would you like to set up new keys now? (y/N): ")
+					scanner.Scan()
+					confirm = scanner.Text()
+					if confirm == "y" || confirm == "Y" {
+						fmt.Println(color.CyanString("\n📦 Starting Genie re-initialization...\n"))
+						initCmd.Run(cmd, args)
+					}
+					return
+				}
 				continue
 			}
 
-			storeKeyIfNotPresent(keyName, prompt)
+			resetKey(keyName)
 
+			color.Yellow("\n🔄 Would you like to set a new value for this key? (y/N): ")
+			scanner.Scan()
+			confirm := scanner.Text()
+			if confirm == "y" || confirm == "Y" {
+				var prompt string
+				switch keyName {
+				case openAIKeyName:
+					prompt = "Enter your OpenAI API Key:"
+				case geminiKeyName:
+					prompt = "Enter your Gemini API Key:"
+				case ssidKeyName:
+					prompt = "Enter the SSID key:"
+				case ignoreListPathKeyName:
+					prompt = "Enter the path to the ignore list file:"
+				case replicateKeyName:
+					prompt = "Enter your Replicate API Key:"
+				default:
+					continue
+				}
+
+				storeKeyIfNotPresent(keyName, prompt, "")
+			}
 		}
-		fmt.Println("Keys are securely stored and ready for use.")
 
+		s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+		s.Suffix = color.GreenString(" Finalizing changes...")
+		s.Start()
+		time.Sleep(1 * time.Second)
+		s.Stop()
+
+		fmt.Println(color.GreenString("\n✨ All changes have been saved successfully!\n"))
 	},
 }

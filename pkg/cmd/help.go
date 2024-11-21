@@ -1,41 +1,144 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
+	"text/template"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
-func rightPad(s string, padStr string, overallLen int) string {
-	var padCountInt int
-	padCountInt = 1 + ((overallLen - len(padStr)) / len(padStr))
-	var retStr = s + strings.Repeat(padStr, padCountInt)
-	return retStr[:overallLen]
+// addEmoji returns an appropriate emoji for each command
+func addEmoji(cmdName string) string {
+	emojiMap := map[string]string{
+		"chat":       "💬",
+		"completion": "🔄",
+		"do":         "🎯",
+		"docs":       "📚",
+		"document":   "📝",
+		"engine":     "⚙️",
+		"generate":   "🎨",
+		"greet":      "👋",
+		"help":       "❓",
+		"image":      "🖼️",
+		"init":       "🔧",
+		"music":      "🎵",
+		"readme":     "📖",
+		"reset":      "🔄",
+		"scrape":     "🕸️",
+		"summarize":  "📊",
+		"support":    "❤️",
+		"switch":     "🔀",
+		"tell":       "💭",
+		"verify":     "✅",
+		"version":    "📌",
+	}
+
+	if emoji, ok := emojiMap[cmdName]; ok {
+		return emoji
+	}
+	return "•"
 }
 
-func trimTrailingWhitespaces(s string) string {
-	return strings.TrimRight(s, " \t\n")
+// Define template functions
+var templateFuncs = template.FuncMap{
+	"addEmoji":                addEmoji,
+	"rightPad":                rightPad,
+	"trimTrailingWhitespaces": trimTrailingWhitespaces,
 }
 
-const helpTemplate = `genie is an AI powered CLI tool to help you with your daily tasks.
+const helpTemplate = `
+✨ Genie AI Assistant
+────────────────────
+Your AI-powered CLI companion for daily tasks
 
-Usage:
+🎯 Usage
+────────
   genie [command]
 
-Available Commands:
-{{range .Commands}}{{if (and .IsAvailableCommand (not .IsAdditionalHelpTopicCommand))}}  [{{.Name}}] {{.Short}}
-{{end}}{{end}}
-{{if .HasAvailableLocalFlags}}Flags:
-{{.LocalFlags.FlagUsages}}
+📚 Available Commands
+───────────────────{{range .Commands}}{{if (and .IsAvailableCommand (not .IsAdditionalHelpTopicCommand))}}
+  {{.Name | printf "%-12s"}} {{addEmoji .Name}} {{.Short}}{{end}}{{end}}
 
-{{end}}Use "genie [command] --help" for more information about a command.
+🛠️  Common Examples
+─────────────────
+  • Start a chat session:
+    $ genie chat
+
+  • Initialize your API keys:
+    $ genie init
+
+  • Reset your configuration:
+    $ genie reset
+
+  • Get command help:
+    $ genie [command] --help
+
+{{if .HasAvailableLocalFlags}}🚩 Flags
+─────────
+{{.LocalFlags.FlagUsages}}{{end}}
+💡 Tips
+───────
+  • Use arrow keys to navigate chat history
+  • Press Ctrl+C to exit any command
+  • Type 'clear' to clear the chat history
+  • Commands are case-sensitive
+
+📖 Learn More
+────────────
+  • Documentation: https://docs.genie.harshalranjhani.in
+  • Report issues: https://github.com/harshalranjhani/genie/issues
 `
+
+func init() {
+	// Register template functions
+	cobra.AddTemplateFuncs(templateFuncs)
+
+	// Set the help template
+	rootCmd.SetHelpTemplate(helpTemplate)
+	rootCmd.AddCommand(helpCmd)
+}
 
 var helpCmd = &cobra.Command{
 	Use:   "help",
-	Short: "Help command",
-	Long:  `Help about genie.`,
-	// Run: func(cmd *cobra.Command, args []string) {
+	Short: "Show help and usage information",
+	Long: color.YellowString(`
+✨ Genie Help Center
+───────────────────
+Get detailed information about Genie commands and features.
+Use 'genie [command] --help' for more details about a specific command.
+`),
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			cmd.Root().Help()
+			return
+		}
 
-	// },
+		// Show help for specific command
+		targetCmd, _, err := cmd.Root().Find(args)
+		if err != nil {
+			color.Red("\n❌ Unknown command: %s", args[0])
+			fmt.Println(color.YellowString("\nAvailable commands:"))
+			cmd.Root().Help()
+			return
+		}
+
+		targetCmd.Help()
+	},
+}
+
+// rightPad adds padding to the right of a string
+func rightPad(s string, padStr string, overallLen int) string {
+	if len(s) >= overallLen {
+		return s
+	}
+	padCount := 1 + ((overallLen - len(s)) / len(padStr))
+	retStr := s + strings.Repeat(padStr, padCount)
+	return retStr[:overallLen]
+}
+
+// trimTrailingWhitespaces removes trailing whitespace
+func trimTrailingWhitespaces(s string) string {
+	return strings.TrimRight(s, " \t\n")
 }

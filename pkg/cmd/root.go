@@ -25,6 +25,7 @@ func Execute() {
 		funcMap := template.FuncMap{
 			"rpad":                    rightPad,
 			"trimTrailingWhitespaces": trimTrailingWhitespaces,
+			"addEmoji":                addEmoji,
 		}
 		tmpl, err := template.New("help").Funcs(funcMap).Parse(helpTemplate)
 		if err != nil {
@@ -46,10 +47,9 @@ func Execute() {
 			c := color.New(color.FgCyan)
 			c.Println(string(line))
 		}
-
-		fmt.Print(out.String())
-		color.Cyan("Additionally, you can visit https://docs.genie.harshalranjhani.in for a detailed documentation.")
+		fmt.Println(out.String())
 	})
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
