@@ -33,6 +33,7 @@ func addEmoji(cmdName string) string {
 		"tell":       "💭",
 		"verify":     "✅",
 		"version":    "📌",
+		"bug":        "🐛",
 	}
 
 	if emoji, ok := emojiMap[cmdName]; ok {
@@ -103,7 +104,7 @@ const subcommandHelpTemplate = `
 {{if .HasAvailableSubCommands}}
 📚 Available Commands
 ───────────────────{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name .NamePadding }} {{addEmoji .Name}} {{.Short}}{{end}}{{end}}{{end}}
+  {{rpad .Name " " 15}} {{addEmoji .Name}} {{.Short}}{{end}}{{end}}{{end}}
 {{if .HasAvailableLocalFlags}}
 🚩 Flags
 ─────────
@@ -119,7 +120,7 @@ const subcommandHelpTemplate = `
 
 💡 Additional Help
 ───────────────
-  Use "{{.CommandPath}} [command] --help" for more information about a command.
+  Use "genie [command] --help" for more information about a command.
 `
 
 func init() {

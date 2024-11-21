@@ -292,3 +292,39 @@ func GenerateReadmeWithGemini(readmePath string, templateName string) error {
 
 	return nil
 }
+
+func GenerateBugReportGemini(description, severity, category, assignee, priority string) (string, error) {
+	ctx := context.Background()
+
+	geminiKey, err := keyring.Get("genie", "gemini_api_key")
+	if err != nil {
+		return "", fmt.Errorf("gemini API key not found: %w", err)
+	}
+
+	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiKey))
+	if err != nil {
+		return "", fmt.Errorf("failed to create gemini client: %w", err)
+	}
+	defer client.Close()
+
+	model := client.GenerativeModel("gemini-1.5-pro")
+	prompt := prompts.GetBugReportPrompt(description, severity, category, assignee, priority)
+
+	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
+	if err != nil {
+		return "", err
+	}
+
+	var genResp structs.GenResponse
+	respJSON, _ := json.MarshalIndent(resp, "", "  ")
+	if err := json.Unmarshal(respJSON, &genResp); err != nil {
+		return "", fmt.Errorf("failed to parse Gemini response: %w", err)
+	}
+
+	if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
+		generatedText := genResp.Candidates[0].Content.Parts[0]
+		return generatedText, nil
+	}
+
+	return "", fmt.Errorf("no response generated")
+}

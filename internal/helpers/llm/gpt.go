@@ -364,3 +364,43 @@ func GenerateReadmeWithGPT(readmePath string, templateName string) error {
 
 	return nil
 }
+
+func GenerateBugReportGPT(description, severity, category, assignee, priority string) (string, error) {
+	openAIKey, err := keyring.Get("genie", "openai_api_key")
+	if err != nil {
+		return "", fmt.Errorf("OpenAI API key not found: %w", err)
+	}
+
+	client := openai.NewClient(openAIKey)
+	ctx := context.Background()
+
+	prompt := prompts.GetBugReportPrompt(description, severity, category, assignee, priority)
+
+	resp, err := client.CreateChatCompletion(
+		ctx,
+		openai.ChatCompletionRequest{
+			Model: "gpt-4",
+			Messages: []openai.ChatCompletionMessage{
+				{
+					Role:    "system",
+					Content: "You are a helpful software engineer who writes clear, detailed bug reports.",
+				},
+				{
+					Role:    "user",
+					Content: prompt,
+				},
+			},
+			Temperature: 0.7,
+		},
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("error generating bug report: %w", err)
+	}
+
+	if len(resp.Choices) == 0 {
+		return "", fmt.Errorf("no response generated")
+	}
+
+	return resp.Choices[0].Message.Content, nil
+}
