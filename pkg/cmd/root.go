@@ -27,26 +27,35 @@ func Execute() {
 			"trimTrailingWhitespaces": trimTrailingWhitespaces,
 			"addEmoji":                addEmoji,
 		}
-		tmpl, err := template.New("help").Funcs(funcMap).Parse(helpTemplate)
+
+		tmpl := helpTemplate
+		if cmd != rootCmd {
+			tmpl = subcommandHelpTemplate
+		}
+
+		t, err := template.New("help").Funcs(funcMap).Parse(tmpl)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+
 		var out bytes.Buffer
-		err = tmpl.Execute(&out, cmd)
+		err = t.Execute(&out, cmd)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		myFigure := figure.NewFigure("genie", "", true)
-		asciiArt := myFigure.String()
-
-		lines := bytes.Split([]byte(asciiArt), []byte("\n"))
-		for _, line := range lines {
-			c := color.New(color.FgCyan)
-			c.Println(string(line))
+		if cmd == rootCmd {
+			myFigure := figure.NewFigure("genie", "", true)
+			asciiArt := myFigure.String()
+			lines := bytes.Split([]byte(asciiArt), []byte("\n"))
+			for _, line := range lines {
+				c := color.New(color.FgCyan)
+				c.Println(string(line))
+			}
 		}
+
 		fmt.Println(out.String())
 	})
 

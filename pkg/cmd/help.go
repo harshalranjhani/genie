@@ -91,12 +91,49 @@ Your AI-powered CLI companion for daily tasks
   • Report issues: https://github.com/harshalranjhani/genie/issues
 `
 
+// Add this constant after the helpTemplate
+const subcommandHelpTemplate = `
+{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}
+
+{{end}}{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}
+🎯 Usage
+────────
+  {{if .Runnable}}{{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{.CommandPath}} [command]{{end}}
+{{if .HasAvailableSubCommands}}
+📚 Available Commands
+───────────────────{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding }} {{addEmoji .Name}} {{.Short}}{{end}}{{end}}{{end}}
+{{if .HasAvailableLocalFlags}}
+🚩 Flags
+─────────
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+🔄 Global Flags
+──────────────
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasExample}}
+
+📝 Examples
+──────────
+{{.Example}}{{end}}
+
+💡 Additional Help
+───────────────
+  Use "{{.CommandPath}} [command] --help" for more information about a command.
+`
+
 func init() {
 	// Register template functions
 	cobra.AddTemplateFuncs(templateFuncs)
 
-	// Set the help template
+	// Set the main help template
 	rootCmd.SetHelpTemplate(helpTemplate)
+
+	// Set the subcommand help template for all commands
+	for _, cmd := range rootCmd.Commands() {
+		cmd.SetHelpTemplate(subcommandHelpTemplate)
+	}
+
 	rootCmd.AddCommand(helpCmd)
 }
 
