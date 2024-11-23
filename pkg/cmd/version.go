@@ -15,6 +15,9 @@ var versionCmd = &cobra.Command{
 	Short: "get the current version of genie",
 	Long:  `All software has versions. This is genie's.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("genie v2.7.9")
+		fmt.Println("genie", Version)
 	},
 }
+
+// Version represents the current version of genie
+const Version = "v2.7.9"
