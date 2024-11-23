@@ -12,7 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"bufio"
+	"log"
+
 	"github.com/briandowns/spinner"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
 	"github.com/google/generative-ai-go/genai"
 	"github.com/harshalranjhani/genie/internal/helpers"
@@ -327,4 +331,126 @@ func GenerateBugReportGemini(description, severity, category, assignee, priority
 	}
 
 	return "", fmt.Errorf("no response generated")
+}
+
+func StartGeminiChat(safeOn bool) {
+	ctx := context.Background()
+	geminiKey, err := keyring.Get("genie", "gemini_api_key")
+	if err != nil {
+		fmt.Println("Gemini API key not found in keyring. Please run `genie init` to store the key.")
+		os.Exit(1)
+	}
+	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiKey))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Close()
+
+	model := client.GenerativeModel("gemini-1.5-flash")
+	model.SafetySettings = getSafetySettings(safeOn)
+	cs := model.StartChat()
+
+	scanner := bufio.NewScanner(os.Stdin)
+	setupChatStyles()
+	startChatSession(ctx, cs, scanner)
+}
+
+func getSafetySettings(safeOn bool) []*genai.SafetySetting {
+	if safeOn {
+		return []*genai.SafetySetting{
+			{
+				Category:  genai.HarmCategoryHarassment,
+				Threshold: genai.HarmBlockLowAndAbove,
+			},
+			{
+				Category:  genai.HarmCategoryDangerousContent,
+				Threshold: genai.HarmBlockLowAndAbove,
+			},
+			{
+				Category:  genai.HarmCategorySexuallyExplicit,
+				Threshold: genai.HarmBlockLowAndAbove,
+			},
+			{
+				Category:  genai.HarmCategoryHateSpeech,
+				Threshold: genai.HarmBlockLowAndAbove,
+			},
+		}
+	}
+	return []*genai.SafetySetting{
+		{
+			Category:  genai.HarmCategoryDangerousContent,
+			Threshold: genai.HarmBlockNone,
+		},
+	}
+}
+
+var (
+	style       lipgloss.Style
+	promptStyle lipgloss.Style
+	aiStyle     lipgloss.Style
+)
+
+func setupChatStyles() {
+	style = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#9D4EDD"))
+
+	promptStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#06D6A0")).
+		Bold(true)
+
+	aiStyle = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#118AB2")).
+		PaddingLeft(2)
+}
+
+func startChatSession(ctx context.Context, cs *genai.ChatSession, scanner *bufio.Scanner) {
+	color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
+	fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
+	fmt.Println(strings.Repeat("─", 50))
+
+	for {
+		fmt.Print(promptStyle.Render("You 💭 > "))
+		scanner.Scan()
+		userInput := scanner.Text()
+
+		if strings.ToLower(userInput) == "exit" {
+			fmt.Println(style.Render("\n👋 Ending chat session. Goodbye!"))
+			break
+		}
+
+		handleChatMessage(ctx, cs, userInput)
+	}
+}
+
+func handleChatMessage(ctx context.Context, cs *genai.ChatSession, userInput string) {
+	cs.History = append(cs.History, &genai.Content{
+		Parts: []genai.Part{genai.Text(userInput)},
+		Role:  "user",
+	})
+
+	s := spinner.New(spinner.CharSets[11], 80*time.Millisecond)
+	s.Prefix = color.HiCyanString("🤔 Thinking: ")
+	s.Suffix = " Please wait..."
+	s.Start()
+
+	genResp, err := cs.SendMessage(ctx, genai.Text(userInput))
+	s.Stop()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
+		response := fmt.Sprintf("%v", genResp.Candidates[0].Content.Parts[0])
+		fmt.Print(color.HiCyanString("\n🤖 AI: "))
+
+		paragraphs := strings.Split(response, "\n")
+		for _, p := range paragraphs {
+			if p != "" {
+				fmt.Println(aiStyle.Render(p))
+			}
+		}
+		fmt.Println(strings.Repeat("─", 50))
+	}
 }

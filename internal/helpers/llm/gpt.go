@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -9,6 +10,7 @@ import (
 	"image/png"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,6 +18,7 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fatih/color"
 	"github.com/harshalranjhani/genie/internal/helpers"
 	"github.com/harshalranjhani/genie/pkg/prompts"
@@ -403,4 +406,99 @@ func GenerateBugReportGPT(description, severity, category, assignee, priority st
 	}
 
 	return resp.Choices[0].Message.Content, nil
+}
+
+func StartGPTChat() {
+	ctx := context.Background()
+	openAIKey, err := keyring.Get("genie", "openai_api_key")
+	if err != nil {
+		fmt.Println("OpenAI API key not found in keyring. Please run `genie init` to store the key.")
+		os.Exit(1)
+	}
+	client := openai.NewClient(openAIKey)
+
+	scanner := bufio.NewScanner(os.Stdin)
+
+	style := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#9D4EDD"))
+
+	promptStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#06D6A0")).
+		Bold(true)
+
+	aiStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#118AB2"))
+
+	color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
+	fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
+	fmt.Println(strings.Repeat("─", 50))
+
+	messages := []openai.ChatCompletionMessage{
+		{
+			Role:    openai.ChatMessageRoleSystem,
+			Content: "You are a helpful assistant.",
+		},
+	}
+
+	for {
+		fmt.Print(promptStyle.Render("You 💭 > "))
+		scanner.Scan()
+		userInput := scanner.Text()
+
+		if strings.ToLower(userInput) == "exit" {
+			fmt.Println(style.Render("\n👋 Ending chat session. Goodbye!"))
+			break
+		}
+
+		messages = append(messages, openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleUser,
+			Content: userInput,
+		})
+
+		s := spinner.New(spinner.CharSets[11], 80*time.Millisecond)
+		s.Prefix = color.HiCyanString("🤔 Thinking: ")
+		s.Suffix = " Please wait..."
+		s.Start()
+
+		stream, err := client.CreateChatCompletionStream(
+			ctx,
+			openai.ChatCompletionRequest{
+				Model:    "gpt-4",
+				Messages: messages,
+				Stream:   true,
+			},
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer stream.Close()
+
+		s.Stop()
+		fmt.Print(color.HiCyanString("\n🤖 AI: "))
+
+		var fullResponse strings.Builder
+		for {
+			response, err := stream.Recv()
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			if err != nil {
+				fmt.Printf("\nStream error: %v\n", err)
+				break
+			}
+
+			content := response.Choices[0].Delta.Content
+			fullResponse.WriteString(content)
+			fmt.Print(aiStyle.Render(content))
+		}
+
+		// Add the complete response to message history
+		messages = append(messages, openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleAssistant,
+			Content: fullResponse.String(),
+		})
+
+		fmt.Println("\n" + strings.Repeat("─", 50))
+	}
 }
