@@ -27,6 +27,7 @@ func addEmoji(cmdName string) string {
 		"readme":     "📖",
 		"reset":      "🔄",
 		"scrape":     "🕸️",
+		"status":     "📊",
 		"summarize":  "📊",
 		"support":    "❤️",
 		"switch":     "🔀",
