@@ -17,6 +17,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/chzyer/readline"
 	"github.com/fatih/color"
 	"github.com/google/generative-ai-go/genai"
 	"github.com/harshalranjhani/genie/internal/helpers"
@@ -405,18 +406,42 @@ func setupChatStyles() {
 }
 
 func startChatSession(ctx context.Context, cs *genai.ChatSession, scanner *bufio.Scanner) {
+	// Initialize readline with promptStyle
+	rl, err := readline.New(promptStyle.Render("You 💭 > "))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rl.Close()
+
 	color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
 	fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
+	fmt.Println(style.Render("Type 'clear' to clear chat history."))
 	fmt.Println(strings.Repeat("─", 50))
 
 	for {
-		fmt.Print(promptStyle.Render("You 💭 > "))
-		scanner.Scan()
-		userInput := scanner.Text()
+		userInput, err := rl.Readline()
+		if err != nil {
+			break
+		}
+
+		userInput = strings.TrimSpace(userInput)
 
 		if strings.ToLower(userInput) == "exit" {
 			fmt.Println(style.Render("\n👋 Ending chat session. Goodbye!"))
 			break
+		}
+
+		// Update clear command to clear screen
+		if strings.ToLower(userInput) == "clear" {
+			cs.History = nil // Clear the chat history
+			// Clear terminal screen
+			fmt.Print("\033[H\033[2J")
+			// Reprint welcome message
+			color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
+			fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
+			fmt.Println(style.Render("Type 'clear' to clear chat history."))
+			fmt.Println(strings.Repeat("─", 50))
+			continue
 		}
 
 		handleChatMessage(ctx, cs, userInput)

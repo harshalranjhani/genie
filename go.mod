@@ -33,6 +33,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/lipgloss v1.0.0 // indirect
 	github.com/charmbracelet/x/ansi v0.4.2 // indirect
+	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/danieljoos/wincred v1.2.1 // indirect
