@@ -9,6 +9,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -42,6 +43,9 @@ var statusCmd = &cobra.Command{
 		ssidKey, _ := keyring.Get(serviceName, ssidKeyName)
 		ignoreListPath, _ := keyring.Get(serviceName, ignoreListPathKeyName)
 
+		// Add verification status check
+		status, _ := middleware.LoadStatus()
+
 		time.Sleep(500 * time.Millisecond)
 		s.Stop()
 
@@ -57,6 +61,18 @@ var statusCmd = &cobra.Command{
 		fmt.Printf("📌 %s: %s\n", color.HiBlackString("Version"), color.HiGreenString(version))
 		fmt.Printf("💻 %s: %s\n", color.HiBlackString("System"), color.HiGreenString(runtime.GOOS))
 		fmt.Printf("⚙️  %s: %s\n", color.HiBlackString("Engine"), color.HiGreenString(engineName))
+
+		// Add Verification Status section before Configuration Status
+		fmt.Println("\n🔐 Verification Status")
+		fmt.Println(strings.Repeat("─", 25))
+		if status != nil && status.Email != "" {
+			fmt.Printf("📧 %s: ", color.HiBlackString("Status"))
+			color.Green("✓ Verified")
+			fmt.Printf("   %s: %s\n", color.HiBlackString("Email"), color.HiBlackString(status.Email))
+		} else {
+			fmt.Printf("📧 %s: ", color.HiBlackString("Status"))
+			color.Yellow("! Not verified")
+		}
 
 		// Configuration Status
 		fmt.Println("\n🔧 Configuration Status")
