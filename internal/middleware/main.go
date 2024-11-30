@@ -59,7 +59,7 @@ func SendVerificationEmail(email string) error {
 	reqBody, _ := json.Marshal(map[string]string{
 		"email": email,
 	})
-	resp, err := client.Post("https://intermediate-cicily-genie-cli-c365731d.koyeb.app/genie/send-verification", "application/json", bytes.NewBuffer(reqBody))
+	resp, err := client.Post("https://api.harshalranjhani.in/genie/send-verification", "application/json", bytes.NewBuffer(reqBody))
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func SaveStatus(status *structs.UserStatus) error {
 }
 
 func WaitForVerification(email string) (string, error) {
-	c, _, err := websocket.DefaultDialer.Dial("wss://intermediate-cicily-genie-cli-c365731d.koyeb.app/", nil)
+	c, _, err := websocket.DefaultDialer.Dial("wss://api.harshalranjhani.in/", nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to connect to WebSocket server: %v", err)
 	}
