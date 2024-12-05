@@ -50,7 +50,11 @@ func GetGeminiCmdResponse(prompt string, safeOn bool) error {
 	defer client.Close()
 
 	// For text-only input, use the gemini-1.5-pro model
-	model := client.GenerativeModel("gemini-1.5-pro")
+	modelName := "gemini-1.5-pro" // default model
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		modelName = selectedModel
+	}
+	model := client.GenerativeModel(modelName)
 	if safeOn {
 		model.SafetySettings = []*genai.SafetySetting{
 			{
@@ -132,7 +136,11 @@ func GetGeminiGeneralResponse(prompt string, safeOn bool, includeDir bool) (stri
 	defer client.Close()
 
 	// For text-only input, use the gemini-1.5-pro model
-	model := client.GenerativeModel("gemini-1.5-pro")
+	modelName := "gemini-1.5-pro" // default model
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		modelName = selectedModel
+	}
+	model := client.GenerativeModel(modelName)
 	if safeOn {
 		model.SafetySettings = []*genai.SafetySetting{
 			{
@@ -276,7 +284,11 @@ func GenerateReadmeWithGemini(readmePath string, templateName string) error {
 	}
 	defer client.Close()
 
-	model := client.GenerativeModel("gemini-1.5-pro")
+	modelName := "gemini-1.5-pro" // default model
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		modelName = selectedModel
+	}
+	model := client.GenerativeModel(modelName)
 	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
 		return err
@@ -312,7 +324,11 @@ func GenerateBugReportGemini(description, severity, category, assignee, priority
 	}
 	defer client.Close()
 
-	model := client.GenerativeModel("gemini-1.5-pro")
+	modelName := "gemini-1.5-pro" // default model
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		modelName = selectedModel
+	}
+	model := client.GenerativeModel(modelName)
 	prompt := prompts.GetBugReportPrompt(description, severity, category, assignee, priority)
 
 	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
@@ -347,7 +363,11 @@ func StartGeminiChat(safeOn bool) {
 	}
 	defer client.Close()
 
-	model := client.GenerativeModel("gemini-1.5-flash")
+	modelName := "gemini-1.5-flash" // default model
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		modelName = selectedModel
+	}
+	model := client.GenerativeModel(modelName)
 	model.SafetySettings = getSafetySettings(safeOn)
 	cs := model.StartChat()
 

@@ -40,8 +40,13 @@ func GetGPTGeneralResponse(prompt string, includeDir bool) {
 	c := openai.NewClient(openAIKey)
 	ctx := context.Background()
 
+	model := "gpt-4"
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		model = selectedModel
+	}
+
 	req := openai.ChatCompletionRequest{
-		Model: "gpt-4o-mini",
+		Model: model,
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleUser,
@@ -88,10 +93,16 @@ func GetGPTCmdResponse(prompt string, safeOn bool) error {
 		return err
 	}
 	client := openai.NewClient(openAIKey)
+
+	model := "gpt-4"
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		model = selectedModel
+	}
+
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model: "gpt-4o-mini",
+			Model: model,
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role:    openai.ChatMessageRoleUser,
@@ -166,8 +177,13 @@ func DocumentCodeWithGPT(filePath string) error {
 
 	prompt := prompts.GetDocumentPrompt(string(content))
 
+	model := "gpt-4"
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		model = selectedModel
+	}
+
 	req := openai.ChatCompletionRequest{
-		Model: "gpt-4o-mini",
+		Model: model,
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,
@@ -336,8 +352,13 @@ func GenerateReadmeWithGPT(readmePath string, templateName string) error {
 	client := openai.NewClient(openAIKey)
 	ctx := context.Background()
 
+	model := "gpt-4"
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		model = selectedModel
+	}
+
 	req := openai.ChatCompletionRequest{
-		Model: "gpt-4o-mini",
+		Model: model,
 		Messages: []openai.ChatCompletionMessage{
 			{
 				Role:    openai.ChatMessageRoleSystem,
@@ -487,10 +508,15 @@ func StartGPTChat() {
 		s.Suffix = " Please wait..."
 		s.Start()
 
+		model := "gpt-4"
+		if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+			model = selectedModel
+		}
+
 		stream, err := client.CreateChatCompletionStream(
 			ctx,
 			openai.ChatCompletionRequest{
-				Model:    "gpt-4",
+				Model:    model,
 				Messages: messages,
 				Stream:   true,
 			},
