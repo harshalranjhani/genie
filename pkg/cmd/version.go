@@ -20,4 +20,4 @@ var versionCmd = &cobra.Command{
 }
 
 // Version represents the current version of genie
-const Version = "v2.8.11"
+const Version = "v2.8.1"
