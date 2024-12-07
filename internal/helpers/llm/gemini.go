@@ -20,7 +20,9 @@ import (
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
 	"github.com/google/generative-ai-go/genai"
+	"github.com/harshalranjhani/genie/internal/constants"
 	"github.com/harshalranjhani/genie/internal/helpers"
+	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/harshalranjhani/genie/internal/structs"
 	"github.com/harshalranjhani/genie/pkg/prompts"
 	"github.com/joho/godotenv"
@@ -436,6 +438,8 @@ func startChatSession(ctx context.Context, cs *genai.ChatSession, scanner *bufio
 	color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
 	fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
 	fmt.Println(style.Render("Type 'clear' to clear chat history."))
+	fmt.Println(style.Render("Type '/history' to export chat history to markdown."))
+	fmt.Println(style.Render("Type '/email' to email chat history."))
 	fmt.Println(strings.Repeat("─", 50))
 
 	for {
@@ -446,21 +450,26 @@ func startChatSession(ctx context.Context, cs *genai.ChatSession, scanner *bufio
 
 		userInput = strings.TrimSpace(userInput)
 
-		if strings.ToLower(userInput) == "exit" {
+		switch strings.ToLower(userInput) {
+		case constants.ExitCommand:
 			fmt.Println(style.Render("\n👋 Ending chat session. Goodbye!"))
-			break
-		}
-
-		// Update clear command to clear screen
-		if strings.ToLower(userInput) == "clear" {
-			cs.History = nil // Clear the chat history
+			return
+		case constants.ClearCommand:
 			// Clear terminal screen
 			fmt.Print("\033[H\033[2J")
 			// Reprint welcome message
 			color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
 			fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
 			fmt.Println(style.Render("Type 'clear' to clear chat history."))
+			fmt.Println(style.Render("Type '/history' to export chat history to markdown."))
+			fmt.Println(style.Render("Type '/email' to email chat history."))
 			fmt.Println(strings.Repeat("─", 50))
+			continue
+		case constants.HistoryCommand:
+			exportGeminiChatHistory(cs.History)
+			continue
+		case constants.EmailCommand:
+			emailChatHistory(cs.History)
 			continue
 		}
 
@@ -469,11 +478,6 @@ func startChatSession(ctx context.Context, cs *genai.ChatSession, scanner *bufio
 }
 
 func handleChatMessage(ctx context.Context, cs *genai.ChatSession, userInput string) {
-	cs.History = append(cs.History, &genai.Content{
-		Parts: []genai.Part{genai.Text(userInput)},
-		Role:  "user",
-	})
-
 	s := spinner.New(spinner.CharSets[11], 80*time.Millisecond)
 	s.Prefix = color.HiCyanString("🤔 Thinking: ")
 	s.Suffix = " Please wait..."
@@ -498,4 +502,107 @@ func handleChatMessage(ctx context.Context, cs *genai.ChatSession, userInput str
 		}
 		fmt.Println(strings.Repeat("─", 50))
 	}
+}
+
+func exportGeminiChatHistory(history []*genai.Content) {
+	if len(history) == 0 {
+		fmt.Printf("%s No chat history available to export.\n", color.RedString("❌"))
+		return
+	}
+
+	s := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("📝 Exporting chat history: ")
+	s.Start()
+
+	timestamp := time.Now().Format("2006-01-02-15-04-05")
+	filename := filepath.Join(".", fmt.Sprintf("chat-history-%s.md", timestamp))
+
+	var content strings.Builder
+	content.WriteString("# Chat History\n\n")
+	content.WriteString(fmt.Sprintf("Generated on: %s\n\n", time.Now().Format("January 2, 2006 15:04:05")))
+	content.WriteString("---\n\n")
+
+	for _, msg := range history {
+		switch msg.Role {
+		case "user":
+			content.WriteString(fmt.Sprintf("### 💭 You\n%v\n\n", msg.Parts[0]))
+		case "model":
+			content.WriteString(fmt.Sprintf("### 🤖 AI\n%v\n\n", msg.Parts[0]))
+		}
+		content.WriteString("---\n\n")
+	}
+
+	err := os.WriteFile(filename, []byte(content.String()), 0644)
+	s.Stop()
+
+	if err != nil {
+		fmt.Printf("%s Failed to export chat history: %v\n", color.RedString("❌"), err)
+		return
+	}
+
+	successMsg := fmt.Sprintf("✨ Chat history exported to: %s", filename)
+	fmt.Println(color.GreenString(successMsg))
+}
+
+func emailChatHistory(history []*genai.Content) {
+	if len(history) == 0 {
+		fmt.Printf("%s No chat history available to email.\n", color.RedString("❌"))
+		return
+	}
+
+	// Create a divider for visual separation
+	fmt.Println(strings.Repeat("─", 50))
+	fmt.Println(color.HiMagentaString("📧 Emailing Chat History"))
+	fmt.Println(strings.Repeat("─", 50))
+
+	// Get current model name
+	modelName := "gemini-1.5-pro"
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		modelName = selectedModel
+	}
+
+	// Get user status to check for verified email
+	status, err := middleware.LoadStatus()
+	var email string
+	if err != nil || status == nil || status.Email == "" {
+		fmt.Print(color.YellowString("Please enter your email address: "))
+		fmt.Scanln(&email)
+	} else {
+		email = status.Email
+	}
+
+	s := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("📝 Sending to ") + color.CyanString(email) + color.HiCyanString(": ")
+	s.Start()
+
+	var messages []map[string]string
+	for _, msg := range history {
+		messages = append(messages, map[string]string{
+			"role":    msg.Role,
+			"content": fmt.Sprintf("%v", msg.Parts[0]),
+		})
+	}
+
+	payload := map[string]interface{}{
+		"timestamp": time.Now().Format(time.RFC3339),
+		"model":     modelName,
+		"messages":  messages,
+		"metadata": map[string]string{
+			"sessionId": fmt.Sprintf("gemini-%d", time.Now().Unix()),
+			"format":    "markdown",
+		},
+	}
+
+	if err := helpers.SendChatHistoryEmail(email, payload); err != nil {
+		s.Stop()
+		fmt.Printf("\n%s Failed to send chat history: %v\n", color.RedString("❌"), err)
+		fmt.Println(strings.Repeat("─", 50))
+		return
+	}
+
+	s.Stop()
+	fmt.Printf("\n%s Chat history sent successfully to %s!\n",
+		color.GreenString("✨"),
+		color.CyanString(email))
+	fmt.Println(strings.Repeat("─", 50))
 }

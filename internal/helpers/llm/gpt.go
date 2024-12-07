@@ -20,7 +20,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/constants"
 	"github.com/harshalranjhani/genie/internal/helpers"
+	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/harshalranjhani/genie/pkg/prompts"
 	"github.com/sashabaranov/go-openai"
 	"github.com/zalando/go-keyring"
@@ -458,6 +460,9 @@ func StartGPTChat() {
 
 	color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
 	fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
+	fmt.Println(style.Render("Type 'clear' to clear chat history."))
+	fmt.Println(style.Render("Type '/history' to export chat history to markdown."))
+	fmt.Println(style.Render("Type '/email' to email chat history."))
 	fmt.Println(strings.Repeat("─", 50))
 
 	messages := []openai.ChatCompletionMessage{
@@ -475,13 +480,11 @@ func StartGPTChat() {
 
 		userInput = strings.TrimSpace(userInput)
 
-		if strings.ToLower(userInput) == "exit" {
+		switch strings.ToLower(userInput) {
+		case constants.ExitCommand:
 			fmt.Println(style.Render("\n👋 Ending chat session. Goodbye!"))
-			break
-		}
-
-		// Update clear command to clear screen
-		if strings.ToLower(userInput) == "clear" {
+			return
+		case constants.ClearCommand:
 			// Clear message history
 			messages = []openai.ChatCompletionMessage{
 				{
@@ -494,7 +497,16 @@ func StartGPTChat() {
 			// Reprint welcome message
 			color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
 			fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
+			fmt.Println(style.Render("Type 'clear' to clear chat history."))
+			fmt.Println(style.Render("Type '/history' to export chat history to markdown."))
+			fmt.Println(style.Render("Type '/email' to email chat history."))
 			fmt.Println(strings.Repeat("─", 50))
+			continue
+		case constants.HistoryCommand:
+			exportChatHistory(messages)
+			continue
+		case constants.EmailCommand:
+			emailGPTChatHistory(messages)
 			continue
 		}
 
@@ -553,4 +565,107 @@ func StartGPTChat() {
 
 		fmt.Println("\n" + strings.Repeat("─", 50))
 	}
+}
+
+func exportChatHistory(messages []openai.ChatCompletionMessage) {
+	if len(messages) <= 1 { // Check if there's only the system message or no messages
+		fmt.Printf("%s No chat history available to export.\n", color.RedString("❌"))
+		return
+	}
+
+	s := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("📝 Exporting chat history: ")
+	s.Start()
+
+	timestamp := time.Now().Format("2006-01-02-15-04-05")
+	filename := filepath.Join(".", fmt.Sprintf("chat-history-%s.md", timestamp))
+
+	var content strings.Builder
+	content.WriteString("# Chat History\n\n")
+	content.WriteString(fmt.Sprintf("Generated on: %s\n\n", time.Now().Format("January 2, 2006 15:04:05")))
+	content.WriteString("---\n\n")
+
+	for _, msg := range messages[1:] { // Skip the system message
+		switch msg.Role {
+		case openai.ChatMessageRoleUser:
+			content.WriteString(fmt.Sprintf("### 💭 You\n%s\n\n", msg.Content))
+		case openai.ChatMessageRoleAssistant:
+			content.WriteString(fmt.Sprintf("### 🤖 AI\n%s\n\n", msg.Content))
+		}
+		content.WriteString("---\n\n")
+	}
+
+	err := os.WriteFile(filename, []byte(content.String()), 0644)
+	s.Stop()
+
+	if err != nil {
+		fmt.Printf("%s Failed to export chat history: %v\n", color.RedString("❌"), err)
+		return
+	}
+
+	successMsg := fmt.Sprintf("✨ Chat history exported to: %s", filename)
+	fmt.Println(color.GreenString(successMsg))
+}
+
+func emailGPTChatHistory(messages []openai.ChatCompletionMessage) {
+	if len(messages) <= 1 {
+		fmt.Printf("%s No chat history available to email.\n", color.RedString("❌"))
+		return
+	}
+
+	// Create a divider for visual separation
+	fmt.Println(strings.Repeat("─", 50))
+	fmt.Println(color.HiMagentaString("📧 Emailing Chat History"))
+	fmt.Println(strings.Repeat("─", 50))
+
+	// Get current model name
+	modelName := "gpt-4"
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		modelName = selectedModel
+	}
+
+	// Get user status to check for verified email
+	status, err := middleware.LoadStatus()
+	var email string
+	if err != nil || status == nil || status.Email == "" {
+		fmt.Print(color.YellowString("Please enter your email address: "))
+		fmt.Scanln(&email)
+	} else {
+		email = status.Email
+	}
+
+	s := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("📝 Sending to ") + color.CyanString(email) + color.HiCyanString(": ")
+	s.Start()
+
+	var chatMessages []map[string]string
+	for _, msg := range messages[1:] {
+		chatMessages = append(chatMessages, map[string]string{
+			"role":    string(msg.Role),
+			"content": msg.Content,
+		})
+	}
+
+	payload := map[string]interface{}{
+		"timestamp": time.Now().Format(time.RFC3339),
+		"model":     modelName,
+		"messages":  chatMessages,
+		"metadata": map[string]string{
+			"sessionId": fmt.Sprintf("gpt-%d", time.Now().Unix()),
+			"format":    "markdown",
+		},
+	}
+
+	if err := helpers.SendChatHistoryEmail(email, payload); err != nil {
+		s.Stop()
+		fmt.Printf("\n%s Failed to send chat history: %v\n", color.RedString("❌"), err)
+		fmt.Println(strings.Repeat("─", 50))
+		return
+	}
+
+	s.Stop()
+	fmt.Printf("\n%s Chat history sent successfully to %s!\n",
+		color.GreenString("✨"),
+		color.CyanString(email))
+	fmt.Println(strings.Repeat("─", 50))
 }
