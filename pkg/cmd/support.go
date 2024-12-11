@@ -9,7 +9,7 @@ import (
 )
 
 func startPayment() error {
-	paymentURL := "https://rzp.io/l/genie"
+	paymentURL := "https://rzp.io/rzp/JUFHvoxw"
 
 	var err error
 	switch os := runtime.GOOS; os {
