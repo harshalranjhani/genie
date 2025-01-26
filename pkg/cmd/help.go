@@ -97,32 +97,31 @@ Your AI-powered CLI companion for daily tasks
 const subcommandHelpTemplate = `
 {{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}
 
-{{end}}{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}
+{{end}}
 🎯 Usage
 ────────
-  {{if .Runnable}}{{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+  {{if .Runnable}}{{.CommandPath}} {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
   {{.CommandPath}} [command]{{end}}
-{{if .HasAvailableSubCommands}}
-📚 Available Commands
+
+{{if .HasAvailableSubCommands}}📚 Available Commands
 ───────────────────{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
-  {{rpad .Name " " 15}} {{addEmoji .Name}} {{.Short}}{{end}}{{end}}{{end}}
-{{if .HasAvailableLocalFlags}}
-🚩 Flags
+  {{rpad .Name " " 15}} {{addEmoji .Name}} {{.Short}}{{end}}{{end}}
+
+{{end}}{{if .HasAvailableLocalFlags}}🚩 Flags
 ─────────
-{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}
 
-🔄 Global Flags
+{{end}}{{if .HasAvailableInheritedFlags}}🔄 Global Flags
 ──────────────
-{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasExample}}
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}
 
-📝 Examples
+{{end}}{{if .HasExample}}📝 Examples
 ──────────
-{{.Example}}{{end}}
+{{.Example}}
 
-💡 Additional Help
+{{end}}💡 Additional Help
 ───────────────
-  Use "genie [command] --help" for more information about a command.
-`
+  Use "genie [command] --help" for more information about a command.`
 
 func init() {
 	// Register template functions
