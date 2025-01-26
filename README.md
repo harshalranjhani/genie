@@ -21,10 +21,9 @@ Your personal assistant for the CLI that helps you:
 - get information about anything related to tech directly from the CLI
 - maintain a chat session with the genie for advanced context understanding
 
+
 <p align="center">
-<a href="https://genie.harshalranjhani.in">
-<img src="https://cdn.hashnode.com/res/hashnode/image/upload/v1716281685360/_2uaTNTl5.webp?auto=format" alt="genie-logo"/>
-</a>
+<img src="demo.gif" alt="Genie CLI Demo" width="800"/>
 </p>
 
 <!-- [![Generic badge](https://img.shields.io/badge/view-demo-blue?style=for-the-badge&label=View%20Demo%20Video)](https://youtu.be/OKKK1GOnlIU)  -->
@@ -32,8 +31,6 @@ Your personal assistant for the CLI that helps you:
 ## Features
 
 ### Welcome
-
-![Welcome](https://cdn.hashnode.com/res/hashnode/image/upload/v1718473561830/j4aVeAVll.png?auto=format)
 
 ## Overview
 
