@@ -1,13 +1,11 @@
 package llm
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -196,56 +194,6 @@ func GetGeminiGeneralResponse(prompt string, safeOn bool, includeDir bool) (stri
 		s.Stop()
 		return "No generated text found.", nil
 	}
-}
-
-//go:embed scripts/generate.py
-var generatePy []byte
-
-func GenerateGeminiImage(prompt string) (string, error) {
-	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
-	s.Prefix = color.HiCyanString("Analyzing: ")
-	s.Start()
-
-	// get ssid from keyring
-	ssid, keyRingError := keyring.Get("genie", "ssid")
-	if keyRingError != nil {
-		s.Stop()
-		fmt.Println("SSID not found in keyring. Please run `genie init` to store the key.")
-		os.Exit(1)
-	}
-
-	tmpFile, err := os.CreateTemp("", "generate-*.py")
-	if err != nil {
-		s.Stop()
-		return "", fmt.Errorf("failed to create temp file: %w", err)
-	}
-	defer os.Remove(tmpFile.Name())
-
-	if _, err := tmpFile.Write(generatePy); err != nil {
-		s.Stop()
-		return "", fmt.Errorf("failed to write to temp file: %w", err)
-	}
-	if err := tmpFile.Close(); err != nil {
-		s.Stop()
-		return "", fmt.Errorf("failed to close temp file: %w", err)
-	}
-
-	cmd := exec.Command("python", tmpFile.Name(), prompt, ssid)
-
-	var out bytes.Buffer
-	cmd.Stdout = &out
-
-	// Run the command
-	err = cmd.Run()
-	if err != nil {
-		s.Stop()
-		return "", fmt.Errorf("failed to execute python script: %w", err)
-	}
-
-	filename := out.String()
-	s.Stop()
-
-	return filename, nil
 }
 
 func GenerateReadmeWithGemini(readmePath string, templateName string) error {
