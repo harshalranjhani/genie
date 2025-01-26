@@ -348,8 +348,21 @@ func StartDeepSeekChat() {
 		s.Suffix = " Please wait..."
 		s.Start()
 
+		// Get the selected model from keyring
+		modelName := deepseek.DeepSeekChat
+		if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+			switch selectedModel {
+			case "deepseek-chat":
+				modelName = deepseek.DeepSeekChat
+			case "deepseek-reasoner":
+				modelName = deepseek.DeepSeekReasoner
+			default:
+				modelName = deepseek.DeepSeekChat
+			}
+		}
+
 		requestBody := map[string]interface{}{
-			"model":    "deepseek-reasoner",
+			"model":    modelName,
 			"messages": messages,
 			"stream":   true,
 		}
@@ -408,25 +421,34 @@ func StartDeepSeekChat() {
 			}
 
 			for _, choice := range streamResp.Choices {
-				if choice.Delta.ReasoningContent != "" {
+				if modelName == deepseek.DeepSeekReasoner && choice.Delta.ReasoningContent != "" {
 					reasoningContent.WriteString(choice.Delta.ReasoningContent)
-				} else if choice.Delta.Content != "" {
+				}
+				if choice.Delta.Content != "" {
 					currentContent.WriteString(choice.Delta.Content)
 					fmt.Print(aiStyle.Render(choice.Delta.Content))
 				}
 			}
 		}
 
-		// Print reasoning content if available
-		if reasoningContent.Len() > 0 {
+		// Print reasoning content only if using reasoner model
+		if modelName == deepseek.DeepSeekReasoner && reasoningContent.Len() > 0 {
 			fmt.Printf("\n%s\n", reasoningStyle.Render("💡 Reasoning:\n"+reasoningContent.String()))
 		}
 
-		messages = append(messages, map[string]string{
-			"role":              "assistant",
-			"content":           currentContent.String(),
-			"reasoning_content": reasoningContent.String(),
-		})
+		// Update messages based on model
+		if modelName == deepseek.DeepSeekReasoner {
+			messages = append(messages, map[string]string{
+				"role":              "assistant",
+				"content":           currentContent.String(),
+				"reasoning_content": reasoningContent.String(),
+			})
+		} else {
+			messages = append(messages, map[string]string{
+				"role":    "assistant",
+				"content": currentContent.String(),
+			})
+		}
 
 		fmt.Println("\n" + strings.Repeat("─", 50))
 	}
