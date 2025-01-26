@@ -80,6 +80,12 @@ var tellCmd = &cobra.Command{
 				os.Exit(1)
 			}
 			fmt.Println(formatMarkdownToPlainText(strResp))
+		case DeepSeekEngine:
+			err := llm.GetDeepSeekGeneralResponse(prompt, true, includeDir)
+			if err != nil {
+				log.Fatal("Error getting response from DeepSeek: ", err)
+				os.Exit(1)
+			}
 		default:
 			log.Fatal("Unknown engine name: ", engineName)
 		}

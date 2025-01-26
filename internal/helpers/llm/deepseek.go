@@ -2,7 +2,9 @@ package llm
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -76,4 +78,71 @@ func GetDeepSeekCmdResponse(prompt string, safeOn bool) error {
 	}
 
 	return nil
+}
+
+func GetDeepSeekGeneralResponse(prompt string, safeOn bool, includeDir bool) error {
+	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("Analyzing: ")
+	s.Start()
+
+	godotenv.Load()
+	ctx := context.Background()
+
+	deepseekKey, err := keyring.Get("genie", "deepseek_api_key")
+	if err != nil {
+		s.Stop()
+		fmt.Println("DeepSeek API key not found in keyring. Please run `genie init` to store the key.")
+		os.Exit(1)
+	}
+	client := deepseek.NewClient(deepseekKey)
+
+	// Get the selected model from keyring
+	modelName := deepseek.DeepSeekChat
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		switch selectedModel {
+		case "deepseek-chat":
+			modelName = deepseek.DeepSeekChat
+		case "deepseek-reasoner":
+			modelName = deepseek.DeepSeekReasoner
+		default:
+			modelName = deepseek.DeepSeekChat
+		}
+	}
+
+	// Create streaming chat completion request
+	request := &deepseek.StreamChatCompletionRequest{
+		Model: modelName,
+		Messages: []deepseek.ChatCompletionMessage{
+			{
+				Role:    constants.ChatMessageRoleUser,
+				Content: prompt,
+			},
+		},
+		Stream: true,
+	}
+
+	stream, err := client.CreateChatCompletionStream(ctx, request)
+	if err != nil {
+		s.Stop()
+		return fmt.Errorf("failed to create stream from DeepSeek: %v", err)
+	}
+	defer stream.Close()
+
+	s.Stop()
+
+	for {
+		response, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			fmt.Println()
+			return nil
+		}
+
+		if err != nil {
+			return fmt.Errorf("stream error: %v", err)
+		}
+
+		for _, choice := range response.Choices {
+			fmt.Print(choice.Delta.Content)
+		}
+	}
 }

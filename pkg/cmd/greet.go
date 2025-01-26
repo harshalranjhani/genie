@@ -46,6 +46,12 @@ Whether you're navigating complex commands or seeking general guidance, the Geni
 				os.Exit(1)
 			}
 			c.Println(formatMarkdownToPlainText(strResp))
+		case DeepSeekEngine:
+			err := llm.GetDeepSeekGeneralResponse(prompt, true, false)
+			if err != nil {
+				log.Fatal("Error getting response from DeepSeek: ", err)
+				os.Exit(1)
+			}
 		default:
 			log.Fatal("Unknown engine name: ", engineName)
 		}
