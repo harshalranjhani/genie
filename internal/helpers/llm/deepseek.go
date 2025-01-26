@@ -565,3 +565,57 @@ func emailDeepSeekChatHistory(messages []map[string]string) {
 		color.CyanString(email))
 	fmt.Println(strings.Repeat("─", 50))
 }
+
+func GenerateBugReportDeepSeek(description, severity, category, assignee, priority string) (string, error) {
+	deepseekKey, err := keyring.Get("genie", "deepseek_api_key")
+	if err != nil {
+		return "", fmt.Errorf("DeepSeek API key not found: %w", err)
+	}
+
+	client := deepseek.NewClient(deepseekKey)
+	ctx := context.Background()
+
+	prompt := prompts.GetBugReportPrompt(description, severity, category, assignee, priority)
+
+	// Get the selected model from keyring
+	modelName := deepseek.DeepSeekChat
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		switch selectedModel {
+		case "deepseek-chat":
+			modelName = deepseek.DeepSeekChat
+		case "deepseek-reasoner":
+			modelName = deepseek.DeepSeekReasoner
+		default:
+			modelName = deepseek.DeepSeekChat
+		}
+	}
+
+	request := &deepseek.ChatCompletionRequest{
+		Model: modelName,
+		Messages: []deepseek.ChatCompletionMessage{
+			{
+				Role:    constants.ChatMessageRoleSystem,
+				Content: "You are a helpful software engineer who writes clear, detailed bug reports.",
+			},
+			{
+				Role:    constants.ChatMessageRoleUser,
+				Content: prompt,
+			},
+		},
+		Temperature: 0.7,
+		ResponseFormat: &deepseek.ResponseFormat{
+			Type: "text",
+		},
+	}
+
+	response, err := client.CreateChatCompletion(ctx, request)
+	if err != nil {
+		return "", fmt.Errorf("error generating bug report: %w", err)
+	}
+
+	if len(response.Choices) == 0 {
+		return "", fmt.Errorf("no response generated")
+	}
+
+	return response.Choices[0].Message.Content, nil
+}
