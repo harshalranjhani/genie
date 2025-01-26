@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -13,6 +16,7 @@ import (
 	"github.com/cohesion-org/deepseek-go/constants"
 	"github.com/fatih/color"
 	"github.com/harshalranjhani/genie/internal/helpers"
+	"github.com/harshalranjhani/genie/pkg/prompts"
 	"github.com/joho/godotenv"
 	"github.com/zalando/go-keyring"
 )
@@ -145,4 +149,86 @@ func GetDeepSeekGeneralResponse(prompt string, safeOn bool, includeDir bool) err
 			fmt.Print(choice.Delta.Content)
 		}
 	}
+}
+
+func DocumentCodeWithDeepSeek(filePath string) error {
+	s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("Analyzing code: ")
+	s.Start()
+	defer s.Stop()
+
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	deepseekKey, err := keyring.Get("genie", "deepseek_api_key")
+	if err != nil {
+		return fmt.Errorf("DeepSeek API key not found in keyring: please run `genie init` to store the key: %w", err)
+	}
+
+	client := deepseek.NewClient(deepseekKey)
+	ctx := context.Background()
+
+	prompt := prompts.GetDocumentPrompt(string(content))
+
+	// Get the selected model from keyring
+	modelName := deepseek.DeepSeekChat
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		switch selectedModel {
+		case "deepseek-chat":
+			modelName = deepseek.DeepSeekChat
+		case "deepseek-reasoner":
+			modelName = deepseek.DeepSeekReasoner
+		default:
+			modelName = deepseek.DeepSeekChat
+		}
+	}
+
+	req := &deepseek.ChatCompletionRequest{
+		Model: modelName,
+		Messages: []deepseek.ChatCompletionMessage{
+			{
+				Role:    constants.ChatMessageRoleSystem,
+				Content: "You are a helpful assistant who documents code.",
+			},
+			{
+				Role:    constants.ChatMessageRoleUser,
+				Content: prompt,
+			},
+		},
+		Temperature: 1.0,
+		ResponseFormat: &deepseek.ResponseFormat{
+			Type: "text",
+		},
+	}
+
+	resp, err := client.CreateChatCompletion(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to create chat completion: %w", err)
+	}
+
+	if len(resp.Choices) == 0 {
+		return errors.New("no response from DeepSeek API")
+	}
+
+	documentedContent := resp.Choices[0].Message.Content
+
+	re := regexp.MustCompile("(?s)```.*?\n(.*?)\n```")
+	matches := re.FindStringSubmatch(documentedContent)
+	if len(matches) > 1 {
+		documentedContent = matches[1]
+	}
+
+	err = ioutil.WriteFile(filePath, []byte(""), 0644)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filePath, []byte(strings.TrimSpace(documentedContent)), 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

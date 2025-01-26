@@ -52,6 +52,12 @@ var documentCmd = &cobra.Command{
 			helpers.RunCommand(pathToOpen)
 		case GeminiEngine:
 			fmt.Println("Gemini engine is currently not supported for documentation. Check back soon!")
+		case DeepSeekEngine:
+			err := llm.DocumentCodeWithDeepSeek(filePath)
+			if err != nil {
+				log.Fatalf("Failed to document code: %v", err)
+			}
+			color.Green("Code documented successfully!")
 		default:
 			log.Fatal("Unknown engine name: ", engineName)
 		}
