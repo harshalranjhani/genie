@@ -56,6 +56,11 @@ var readmeCmd = &cobra.Command{
 			if err != nil {
 				log.Fatalf("Failed to generate README with Gemini: %v", err)
 			}
+		case DeepSeekEngine:
+			err := llm.GenerateReadmeWithDeepSeek(readmePath, templateName)
+			if err != nil {
+				log.Fatalf("Failed to generate README with DeepSeek: %v", err)
+			}
 		default:
 			log.Fatal("Unknown engine name: ", engineName)
 		}

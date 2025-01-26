@@ -619,3 +619,86 @@ func GenerateBugReportDeepSeek(description, severity, category, assignee, priori
 
 	return response.Choices[0].Message.Content, nil
 }
+
+func GenerateReadmeWithDeepSeek(readmePath string, templateName string) error {
+	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
+	rootDir, err := helpers.GetCurrentDirectoriesAndFiles(cwd)
+	if err != nil {
+		return fmt.Errorf("failed to get directory structure: %w", err)
+	}
+	s.Prefix = color.HiCyanString("Generating README: ")
+	s.Start()
+	defer s.Stop()
+
+	var repoData strings.Builder
+	helpers.PrintData(&repoData, rootDir, 0)
+
+	sanitizedRepoData := helpers.SanitizeUTF8(repoData.String())
+
+	// get project name from root folder name
+	projectName := filepath.Base(cwd)
+
+	prompt := prompts.GetReadmePrompt(sanitizedRepoData, templateName, projectName)
+
+	deepseekKey, err := keyring.Get("genie", "deepseek_api_key")
+	if err != nil {
+		return fmt.Errorf("DeepSeek API key not found in keyring: please run `genie init` to store the key: %w", err)
+	}
+
+	client := deepseek.NewClient(deepseekKey)
+	ctx := context.Background()
+
+	// Get the selected model from keyring
+	modelName := deepseek.DeepSeekChat
+	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
+		switch selectedModel {
+		case "deepseek-chat":
+			modelName = deepseek.DeepSeekChat
+		case "deepseek-reasoner":
+			modelName = deepseek.DeepSeekReasoner
+		default:
+			modelName = deepseek.DeepSeekChat
+		}
+	}
+
+	req := &deepseek.ChatCompletionRequest{
+		Model: modelName,
+		Messages: []deepseek.ChatCompletionMessage{
+			{
+				Role:    constants.ChatMessageRoleSystem,
+				Content: "You are a helpful assistant who generates README files.",
+			},
+			{
+				Role:    constants.ChatMessageRoleUser,
+				Content: prompt,
+			},
+		},
+		Temperature: 0.7,
+		ResponseFormat: &deepseek.ResponseFormat{
+			Type: "text",
+		},
+	}
+
+	resp, err := client.CreateChatCompletion(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to create chat completion: %w", err)
+	}
+
+	if len(resp.Choices) == 0 {
+		return errors.New("no response from DeepSeek API")
+	}
+
+	generatedText := resp.Choices[0].Message.Content
+
+	if err := helpers.ProcessTemplateResponse(templateName, generatedText, readmePath); err != nil {
+		return fmt.Errorf("failed to process template response: %w", err)
+	}
+
+	return nil
+}
