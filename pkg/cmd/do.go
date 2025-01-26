@@ -52,6 +52,9 @@ var doCmd = &cobra.Command{
 			color.Green("Safety settings are on.")
 			if engineName == GPTEngine {
 				color.Red("Safety settings are low by default for GPT engine.")
+			} else if engineName == DeepSeekEngine {
+				color.Red("Currently DeepSeek does not support safe mode. But we're still instructing it to be extra cautious for this particular request.")
+				prompt += " Please ensure the command is safe and does not contain any destructive behavior like deleting files, directories, etc. If it does, please reject it and just echo why you rejected"
 			}
 		} else {
 			color.Red("Safety settings are off.")
@@ -69,7 +72,7 @@ var doCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 		case DeepSeekEngine:
-			err := llm.GetDeepSeekCmdResponse(prompt)
+			err := llm.GetDeepSeekCmdResponse(prompt, safeSettings)
 			if err != nil {
 				log.Fatal(err)
 			}

@@ -15,7 +15,7 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
-func GetDeepSeekCmdResponse(prompt string) error {
+func GetDeepSeekCmdResponse(prompt string, safeOn bool) error {
 	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
 	s.Prefix = color.HiCyanString("Analyzing: ")
 	s.Start()
