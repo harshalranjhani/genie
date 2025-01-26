@@ -35,6 +35,8 @@ var chatCmd = &cobra.Command{
 			llm.StartGPTChat()
 		case GeminiEngine:
 			llm.StartGeminiChat(safeSettings)
+		case DeepSeekEngine:
+			llm.StartDeepSeekChat()
 		default:
 			log.Fatal("Unknown engine name: ", engineName)
 		}
