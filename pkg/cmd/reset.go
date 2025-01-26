@@ -16,11 +16,10 @@ import (
 var keys = map[int]string{
 	1: openAIKeyName,
 	2: geminiKeyName,
-	3: ssidKeyName,
-	4: deepseekKeyName,
-	5: replicateKeyName,
-	6: ignoreListPathKeyName,
-	7: "all",
+	3: deepseekKeyName,
+	4: replicateKeyName,
+	5: ignoreListPathKeyName,
+	6: "all",
 }
 
 func resetKey(keyName string) {
@@ -46,7 +45,7 @@ func resetKeys() {
 	time.Sleep(500 * time.Millisecond)
 	s.Stop()
 
-	keys := []string{openAIKeyName, geminiKeyName, ssidKeyName, ignoreListPathKeyName, replicateKeyName}
+	keys := []string{openAIKeyName, geminiKeyName, deepseekKeyName, ignoreListPathKeyName, replicateKeyName}
 	for _, key := range keys {
 		if err := keyring.Delete(serviceName, key); err != nil {
 			color.Red("✘ Failed to delete %s: %s\n", key, err)
@@ -77,11 +76,10 @@ You can choose to reset individual keys or all of them at once.
 			options := map[string]string{
 				"1": "Reset OpenAI API Key 🤖",
 				"2": "Reset Gemini API Key 🧞",
-				"3": "Reset SSID 🔐",
-				"4": "Reset DeepSeek API Key 🔄",
-				"5": "Reset Replicate API Key 🔄",
-				"6": "Reset Ignore List Path 📝",
-				"7": "Reset All Keys ⚠️",
+				"3": "Reset DeepSeek API Key 🔄",
+				"4": "Reset Replicate API Key 🔄",
+				"5": "Reset Ignore List Path 📝",
+				"6": "Reset All Keys ⚠️",
 				"0": "Exit 👋",
 			}
 
@@ -138,8 +136,6 @@ You can choose to reset individual keys or all of them at once.
 					prompt = "Enter your OpenAI API Key:"
 				case geminiKeyName:
 					prompt = "Enter your Gemini API Key:"
-				case ssidKeyName:
-					prompt = "Enter the SSID key:"
 				case ignoreListPathKeyName:
 					prompt = "Enter the path to the ignore list file:"
 				case replicateKeyName:

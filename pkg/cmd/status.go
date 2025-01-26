@@ -16,6 +16,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(statusCmd)
+	statusCmd.Flags().BoolP("reveal-keys", "r", false, "Reveal API keys instead of masking them")
 }
 
 var statusCmd = &cobra.Command{
@@ -23,6 +24,8 @@ var statusCmd = &cobra.Command{
 	Short: "Display genie status information",
 	Long:  `Show detailed information about genie's current configuration, engine status, and system information.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		revealKeys, _ := cmd.Flags().GetBool("reveal-keys")
+
 		s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
 		s.Prefix = color.HiCyanString("Fetching status: ")
 		s.Start()
@@ -41,7 +44,6 @@ var statusCmd = &cobra.Command{
 		geminiKey, _ := keyring.Get(serviceName, geminiKeyName)
 		replicateKey, _ := keyring.Get(serviceName, replicateKeyName)
 		deepseekKey, _ := keyring.Get(serviceName, deepseekKeyName)
-		ssidKey, _ := keyring.Get(serviceName, ssidKeyName)
 		ignoreListPath, _ := keyring.Get(serviceName, ignoreListPathKeyName)
 
 		// Add verification status check
@@ -79,11 +81,10 @@ var statusCmd = &cobra.Command{
 		fmt.Println("\n🔧 Configuration Status")
 		fmt.Println(strings.Repeat("─", 25))
 
-		printKeyStatus("OpenAI API", openAIKey)
-		printKeyStatus("Gemini API", geminiKey)
-		printKeyStatus("DeepSeek API", deepseekKey)
-		printKeyStatus("Replicate API", replicateKey)
-		printKeyStatus("SSID", ssidKey)
+		printKeyStatus("OpenAI API", openAIKey, revealKeys)
+		printKeyStatus("Gemini API", geminiKey, revealKeys)
+		printKeyStatus("DeepSeek API", deepseekKey, revealKeys)
+		printKeyStatus("Replicate API", replicateKey, revealKeys)
 
 		// Ignore List Status
 		fmt.Printf("📝 %s: ", color.HiBlackString("Ignore List"))
@@ -108,11 +109,15 @@ var statusCmd = &cobra.Command{
 	},
 }
 
-func printKeyStatus(name string, key string) {
+func printKeyStatus(name string, key string, reveal bool) {
 	fmt.Printf("🔑 %s: ", color.HiBlackString(name))
 	if key != "" {
 		color.Green("✓ Configured")
-		fmt.Printf("   %s: %s\n", color.HiBlackString("Key"), color.HiBlackString(maskKey(key)))
+		displayKey := key
+		if !reveal {
+			displayKey = maskKey(key)
+		}
+		fmt.Printf("   %s: %s\n", color.HiBlackString("Key"), color.HiBlackString(displayKey))
 	} else {
 		color.Yellow("! Not configured")
 	}

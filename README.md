@@ -108,8 +108,7 @@ genie image "prompt"
 - **Text-to-Image Generation**: Converts text prompts into images.
 - **Versatile Use Cases**: Can be used for creating diagrams, charts, illustrations, and more.
 
-**Note:** When using the gemini engine, make sure you pass the SSID and API key as environment variables.
-The SSID is the `__Secure-1PSID` cookie value from the browser after logging into the [Gemini website](https://gemini.google.com).
+Note: This is only supported for the GPT engine.
 
 ### 3. `music`
 

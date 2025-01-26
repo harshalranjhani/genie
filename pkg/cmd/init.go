@@ -20,7 +20,6 @@ func init() {
 const serviceName = "genie"
 const openAIKeyName = "openai_api_key"
 const geminiKeyName = "gemini_api_key"
-const ssidKeyName = "ssid"
 const ignoreListPathKeyName = "ignore_list_path"
 const replicateKeyName = "replicate_api_key"
 const deepseekKeyName = "deepseek_api_key"
@@ -80,10 +79,9 @@ Let's get started! 🚀
 		// Check for existing keys
 		_, errOpenAI := keyring.Get(serviceName, openAIKeyName)
 		_, errGemini := keyring.Get(serviceName, geminiKeyName)
-		_, errSSID := keyring.Get(serviceName, ssidKeyName)
 		_, errIgnoreListPath := keyring.Get(serviceName, ignoreListPathKeyName)
 		_, errDeepseek := keyring.Get(serviceName, deepseekKeyName)
-		if errOpenAI == nil || errGemini == nil || errSSID == nil || errIgnoreListPath == nil || errDeepseek == nil {
+		if errOpenAI == nil || errGemini == nil || errIgnoreListPath == nil || errDeepseek == nil {
 			color.Yellow("\n⚠️  Some or all keys are already present!")
 			fmt.Print(color.HiBlackString("Use "))
 			color.Cyan("genie reset")
@@ -98,7 +96,6 @@ Let's get started! 🚀
 		// Collect all keys
 		openAIKey := storeKeyIfNotPresent(openAIKeyName, "Enter your OpenAI API Key", "🤖")
 		geminiKey := storeKeyIfNotPresent(geminiKeyName, "Enter your Gemini API Key", "🧞")
-		ssidKey := storeKeyIfNotPresent(ssidKeyName, "Enter the SSID key", "🔐")
 		deepseekKey := storeKeyIfNotPresent(deepseekKeyName, "Enter your DeepSeek API Key", "🔄")
 		replicateKey := storeKeyIfNotPresent(replicateKeyName, "Enter your Replicate API Key", "🔄")
 		ignoreListPath := storeKeyIfNotPresent(ignoreListPathKeyName, "Enter the path to your ignore list file", "📝")
@@ -123,7 +120,6 @@ Let's get started! 🚀
 		fmt.Println(color.HiBlackString("────────────────────────"))
 		fmt.Printf("%s OpenAI API Key: %s\n", color.HiBlackString("├─ 🤖"), maskKey(openAIKey))
 		fmt.Printf("%s Gemini API Key: %s\n", color.HiBlackString("├─ 🧞"), maskKey(geminiKey))
-		fmt.Printf("%s SSID: %s\n", color.HiBlackString("├─ 🔐"), maskKey(ssidKey))
 		fmt.Printf("%s DeepSeek API Key: %s\n", color.HiBlackString("└─ 🔄"), maskKey(deepseekKey))
 		fmt.Printf("%s Replicate API Key: %s\n", color.HiBlackString("├─ 🔄"), maskKey(replicateKey))
 		fmt.Printf("%s Ignore List Path: %s\n", color.HiBlackString("├─ 📝"), ignoreListPath)
