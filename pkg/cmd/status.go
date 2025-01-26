@@ -40,6 +40,7 @@ var statusCmd = &cobra.Command{
 		openAIKey, _ := keyring.Get(serviceName, openAIKeyName)
 		geminiKey, _ := keyring.Get(serviceName, geminiKeyName)
 		replicateKey, _ := keyring.Get(serviceName, replicateKeyName)
+		deepseekKey, _ := keyring.Get(serviceName, deepseekKeyName)
 		ssidKey, _ := keyring.Get(serviceName, ssidKeyName)
 		ignoreListPath, _ := keyring.Get(serviceName, ignoreListPathKeyName)
 
@@ -80,6 +81,7 @@ var statusCmd = &cobra.Command{
 
 		printKeyStatus("OpenAI API", openAIKey)
 		printKeyStatus("Gemini API", geminiKey)
+		printKeyStatus("DeepSeek API", deepseekKey)
 		printKeyStatus("Replicate API", replicateKey)
 		printKeyStatus("SSID", ssidKey)
 

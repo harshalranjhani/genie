@@ -1,6 +1,8 @@
 module github.com/harshalranjhani/genie
 
-go 1.21.3
+go 1.23.3
+
+toolchain go1.23.5
 
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
@@ -35,6 +37,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.4.2 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cohesion-org/deepseek-go v0.0.0-20250125185641-7c0a2e72ee60 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/danieljoos/wincred v1.2.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect

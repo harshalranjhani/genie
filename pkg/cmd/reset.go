@@ -17,9 +17,10 @@ var keys = map[int]string{
 	1: openAIKeyName,
 	2: geminiKeyName,
 	3: ssidKeyName,
-	4: ignoreListPathKeyName,
+	4: deepseekKeyName,
 	5: replicateKeyName,
-	6: "all",
+	6: ignoreListPathKeyName,
+	7: "all",
 }
 
 func resetKey(keyName string) {
@@ -77,9 +78,10 @@ You can choose to reset individual keys or all of them at once.
 				"1": "Reset OpenAI API Key 🤖",
 				"2": "Reset Gemini API Key 🧞",
 				"3": "Reset SSID 🔐",
-				"4": "Reset Ignore List Path 📝",
+				"4": "Reset DeepSeek API Key 🔄",
 				"5": "Reset Replicate API Key 🔄",
-				"6": "Reset All Keys ⚠️",
+				"6": "Reset Ignore List Path 📝",
+				"7": "Reset All Keys ⚠️",
 				"0": "Exit 👋",
 			}
 
@@ -105,6 +107,7 @@ You can choose to reset individual keys or all of them at once.
 			}
 
 			keyName := keys[choice]
+			fmt.Println(keyName)
 			if keyName == "all" {
 				fmt.Print(color.YellowString("⚠️  Are you sure you want to reset all keys? (y/N): "))
 				scanner.Scan()
@@ -141,6 +144,8 @@ You can choose to reset individual keys or all of them at once.
 					prompt = "Enter the path to the ignore list file:"
 				case replicateKeyName:
 					prompt = "Enter your Replicate API Key:"
+				case deepseekKeyName:
+					prompt = "Enter your DeepSeek API Key:"
 				default:
 					continue
 				}

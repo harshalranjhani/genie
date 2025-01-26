@@ -46,7 +46,8 @@ It shows which engine is active (GPT or Gemini) and which specific model is bein
 
 		// Print available models for current engine
 		color.Cyan("\nAvailable Models:")
-		if engineName == GPTEngine {
+		switch engineName {
+		case GPTEngine:
 			for _, model := range gptModels {
 				if model == modelName {
 					color.Green("  • %s (current)", model)
@@ -54,7 +55,7 @@ It shows which engine is active (GPT or Gemini) and which specific model is bein
 					fmt.Printf("  • %s\n", model)
 				}
 			}
-		} else {
+		case GeminiEngine:
 			for _, model := range geminiModels {
 				if model == modelName {
 					color.Green("  • %s (current)", model)
@@ -62,6 +63,16 @@ It shows which engine is active (GPT or Gemini) and which specific model is bein
 					fmt.Printf("  • %s\n", model)
 				}
 			}
+		case DeepSeekEngine:
+			for _, model := range deepseekModels {
+				if model == modelName {
+					color.Green("  • %s (current)", model)
+				} else {
+					fmt.Printf("  • %s\n", model)
+				}
+			}
+		default:
+			color.Yellow("  No models available for engine: %s", engineName)
 		}
 
 		// Print helpful commands

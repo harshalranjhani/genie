@@ -14,6 +14,7 @@ const (
 	modelAccountKey = "modelName"
 	GPTEngine       = "GPT"
 	GeminiEngine    = "Gemini"
+	DeepSeekEngine  = "DeepSeek"
 )
 
 var (
@@ -39,6 +40,12 @@ var (
 		"gemini-1.5-flash",
 		"gemini-1.5-flash-8b",
 	}
+
+	// Add DeepSeek models
+	deepseekModels = []string{
+		"deepseek-chat",
+		"deepseek-reasoner",
+	}
 )
 
 func init() {
@@ -49,8 +56,8 @@ func init() {
 
 var switchCmd = &cobra.Command{
 	Use:   "switch",
-	Short: "Switch between different engines (Gemini, GPT) and models",
-	Long:  `This command allows you to switch between different engines (Gemini, GPT) and their respective models.`,
+	Short: "Switch between different engines (Gemini, GPT, DeepSeek) and models",
+	Long:  `This command allows you to switch between different engines (Gemini, GPT, DeepSeek) and their respective models.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get current engine
 		engineName, err := keyring.Get(serviceName, accountName)
@@ -94,9 +101,17 @@ var switchCmd = &cobra.Command{
 		color.Cyan("Current Engine:")
 		color.Green("  • %s", engineName)
 
-		newEngine := GeminiEngine
-		if engineName == GeminiEngine {
+		// Modified engine switching logic
+		var newEngine string
+		switch engineName {
+		case GeminiEngine:
 			newEngine = GPTEngine
+		case GPTEngine:
+			newEngine = DeepSeekEngine
+		case DeepSeekEngine:
+			newEngine = GeminiEngine
+		default:
+			newEngine = GeminiEngine
 		}
 
 		if err := keyring.Set(serviceName, accountName, newEngine); err != nil {
@@ -106,8 +121,11 @@ var switchCmd = &cobra.Command{
 
 		// Set default model for the new engine
 		defaultModel := "gemini-1.5-pro"
-		if newEngine == GPTEngine {
+		switch newEngine {
+		case GPTEngine:
 			defaultModel = "gpt-4"
+		case DeepSeekEngine:
+			defaultModel = "deepseek-chat"
 		}
 		if err := keyring.Set(serviceName, modelAccountKey, defaultModel); err != nil {
 			color.Red("✗ Failed to set default model.")
@@ -139,7 +157,8 @@ func printAvailableModels(engine string) {
 	color.Green("  • %s", currentModel)
 
 	color.Cyan("\nAvailable Models:")
-	if engine == GPTEngine {
+	switch engine {
+	case GPTEngine:
 		for _, model := range gptModels {
 			if model == currentModel {
 				color.Green("  • %s (current)", model)
@@ -147,8 +166,16 @@ func printAvailableModels(engine string) {
 				fmt.Printf("  • %s\n", model)
 			}
 		}
-	} else {
+	case GeminiEngine:
 		for _, model := range geminiModels {
+			if model == currentModel {
+				color.Green("  • %s (current)", model)
+			} else {
+				fmt.Printf("  • %s\n", model)
+			}
+		}
+	case DeepSeekEngine:
+		for _, model := range deepseekModels {
 			if model == currentModel {
 				color.Green("  • %s (current)", model)
 			} else {
@@ -171,10 +198,13 @@ func switchModel(engine, model string) error {
 	color.Green("  • %s", engine)
 
 	var validModels []string
-	if engine == GPTEngine {
+	switch engine {
+	case GPTEngine:
 		validModels = gptModels
-	} else {
+	case GeminiEngine:
 		validModels = geminiModels
+	case DeepSeekEngine:
+		validModels = deepseekModels
 	}
 
 	// Validate model name

@@ -68,6 +68,11 @@ var doCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
+		case DeepSeekEngine:
+			err := llm.GetDeepSeekCmdResponse(prompt)
+			if err != nil {
+				log.Fatal(err)
+			}
 		default:
 			log.Fatal("Unknown engine name: ", engineName)
 		}
