@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/harshalranjhani/genie/internal/structs"
 	"github.com/spf13/cobra"
+	"github.com/zalando/go-keyring"
 )
 
 func GetStatusFilePath() (string, error) {
@@ -152,5 +153,21 @@ func VerifySubscriptionMiddleware(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("subscription verification failed")
 	}
 	// fmt.Println(color.GreenString("Subscription verified successfully."))
+	return nil
+}
+
+func CheckKeyringSetup() error {
+	// Check if the service exists by attempting to read a key
+	_, err := keyring.Get("genie", "ignore_list_path")
+	if err != nil {
+		return fmt.Errorf("genie service not initialized. Please run 'genie init' to set up required configurations")
+	}
+
+	// Check for required fields
+	ignorePath, err := keyring.Get("genie", "ignore_list_path")
+	if err != nil || ignorePath == "" {
+		return fmt.Errorf("ignore list path not configured. Please run 'genie init' to set up required configurations")
+	}
+
 	return nil
 }

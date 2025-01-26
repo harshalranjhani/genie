@@ -20,6 +20,7 @@ var keys = map[int]string{
 	4: replicateKeyName,
 	5: ignoreListPathKeyName,
 	6: "all",
+	7: "purge",
 }
 
 func resetKey(keyName string) {
@@ -55,6 +56,27 @@ func resetKeys() {
 	}
 }
 
+func purgeGenieService() {
+	s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+	s.Suffix = color.RedString(" Purging all Genie data...")
+	s.Start()
+	time.Sleep(500 * time.Millisecond)
+	s.Stop()
+
+	// Delete all known keys first
+	keys := []string{openAIKeyName, geminiKeyName, deepseekKeyName, ignoreListPathKeyName, replicateKeyName}
+	for _, key := range keys {
+		_ = keyring.Delete(serviceName, key)
+	}
+
+	// Delete the service itself if supported by the system keyring
+	if err := keyring.Delete(serviceName, serviceName); err != nil {
+		color.Yellow("Note: Service entry could not be removed (this is normal on some systems)")
+	}
+
+	color.Red("🗑️  All Genie data has been purged from your system")
+}
+
 func init() {
 	rootCmd.AddCommand(resetCmd)
 }
@@ -80,6 +102,7 @@ You can choose to reset individual keys or all of them at once.
 				"4": "Reset Replicate API Key 🔄",
 				"5": "Reset Ignore List Path 📝",
 				"6": "Reset All Keys ⚠️",
+				"7": "Purge All Genie Data 🗑️",
 				"0": "Exit 👋",
 			}
 
@@ -105,6 +128,17 @@ You can choose to reset individual keys or all of them at once.
 			}
 
 			keyName := keys[choice]
+			if keyName == "purge" {
+				fmt.Print(color.RedString("⚠️  WARNING: This will completely remove all Genie data from your system.\nAre you absolutely sure? (yes/N): "))
+				scanner.Scan()
+				confirm := scanner.Text()
+				if confirm == "yes" {
+					purgeGenieService()
+					color.Cyan("👋 Goodbye!")
+					return
+				}
+				continue
+			}
 			fmt.Println(keyName)
 			if keyName == "all" {
 				fmt.Print(color.YellowString("⚠️  Are you sure you want to reset all keys? (y/N): "))
