@@ -18,7 +18,7 @@ var rootCmd = &cobra.Command{
 	Long:  `genie is an AI powered CLI tool to help you with your daily tasks.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Skip middleware checks for init and reset commands
-		if cmd.Name() == "init" || cmd.Name() == "reset" {
+		if cmd.Name() == "init" || cmd.Name() == "reset" || cmd.Name() == "completion" {
 			return nil
 		}
 
