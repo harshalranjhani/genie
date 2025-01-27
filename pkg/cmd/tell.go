@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/config"
 	"github.com/harshalranjhani/genie/internal/helpers"
 	"github.com/harshalranjhani/genie/internal/helpers/llm"
 	"github.com/harshalranjhani/genie/pkg/prompts"
@@ -23,25 +23,30 @@ func init() {
 }
 
 var tellCmd = &cobra.Command{
-	Use:   "tell `prompt in quotes`",
-	Short: "This is a command to seek help from the genie.",
-	Long:  `Ask the genie about anything you need help with related to CLI issues and queries within UNIX or any other shell environment. Focus on troubleshooting, script writing, command explanations, and system configurations. Avoid discussing unrelated topics. The Operating System of the User is: ` + runtime.GOOS,
+	Use:   "tell",
+	Short: "This is a command to seek help from the genie",
+	Long:  `This is a command to seek help from the genie. For example: 'genie tell "what is docker?"'`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			cmd.Help()
+		if len(args) < 1 {
+			color.Red("Please provide a question for the genie")
 			return
+		}
+
+		prompt := args[0]
+		engineName, err := keyring.Get(serviceName, "engineName")
+		if err != nil {
+			log.Fatal("Error retrieving engine name from keyring:", err)
+		}
+
+		_, exists := config.GetEngine(engineName)
+		if !exists {
+			log.Fatal("Unknown engine name: ", engineName)
 		}
 
 		includeDir, _ := cmd.Flags().GetBool("include-dir")
 		includeGit, _ := cmd.Flags().GetBool("include-git-changes")
 
-		var prompt string
 		var sb strings.Builder
-
-		engineName, err := keyring.Get(serviceName, "engineName")
-		if err != nil {
-			log.Fatal("Error retrieving engine name from keyring:", err)
-		}
 
 		dir, err := os.Getwd()
 		if err != nil {
@@ -68,26 +73,24 @@ var tellCmd = &cobra.Command{
 			}
 		}
 
-		prompt = prompts.GetTellPrompt(args[0], sb)
+		prompt = prompts.GetTellPrompt(prompt, sb)
 
 		switch engineName {
-		case GPTEngine:
+		case config.GPTEngine:
 			llm.GetGPTGeneralResponse(prompt, includeDir)
-		case GeminiEngine:
+		case config.GeminiEngine:
 			strResp, err := llm.GetGeminiGeneralResponse(prompt, true, includeDir)
 			if err != nil {
 				log.Fatal("Error getting response from Gemini: ", err)
 				os.Exit(1)
 			}
 			fmt.Println(formatMarkdownToPlainText(strResp))
-		case DeepSeekEngine:
+		case config.DeepSeekEngine:
 			err := llm.GetDeepSeekGeneralResponse(prompt, true, includeDir)
 			if err != nil {
 				log.Fatal("Error getting response from DeepSeek: ", err)
 				os.Exit(1)
 			}
-		default:
-			log.Fatal("Unknown engine name: ", engineName)
 		}
 	},
 }

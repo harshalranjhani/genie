@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/config"
 	"github.com/harshalranjhani/genie/internal/helpers/llm"
 	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/spf13/cobra"
@@ -38,31 +40,34 @@ var readmeCmd = &cobra.Command{
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
+		_, exists := config.GetEngine(engineName)
+		if !exists {
+			log.Fatal("Unknown engine name: ", engineName)
+		}
+
 		cwd, err := os.Getwd()
 		if err != nil {
-			log.Fatalf("Failed to get current working directory: %v", err)
+			color.Red("Failed to get current working directory: %v", err)
+			os.Exit(1)
 		}
 
 		readmePath := filepath.Join(cwd, readmeFileName)
-
 		switch engineName {
-		case GPTEngine:
+		case config.GPTEngine:
 			err := llm.GenerateReadmeWithGPT(readmePath, templateName)
 			if err != nil {
 				log.Fatalf("Failed to generate README with GPT: %v", err)
 			}
-		case GeminiEngine:
+		case config.GeminiEngine:
 			err := llm.GenerateReadmeWithGemini(readmePath, templateName)
 			if err != nil {
 				log.Fatalf("Failed to generate README with Gemini: %v", err)
 			}
-		case DeepSeekEngine:
+		case config.DeepSeekEngine:
 			err := llm.GenerateReadmeWithDeepSeek(readmePath, templateName)
 			if err != nil {
 				log.Fatalf("Failed to generate README with DeepSeek: %v", err)
 			}
-		default:
-			log.Fatal("Unknown engine name: ", engineName)
 		}
 
 		fmt.Printf("%s generated successfully!\n", readmeFileName)

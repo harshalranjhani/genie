@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/config"
 	"github.com/harshalranjhani/genie/internal/helpers"
 	"github.com/harshalranjhani/genie/internal/helpers/llm"
 	"github.com/spf13/cobra"
@@ -26,7 +27,6 @@ var documentCmd = &cobra.Command{
 	Short: "Document your code with genie",
 	Long:  `Transform your code with genie comments with great documentation which can be later used easily to get summaries of your code.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Determine the file path
 		filePath := filePathToConnect
 		if !filepath.IsAbs(filePathToConnect) {
 			cwd, err := os.Getwd()
@@ -41,8 +41,18 @@ var documentCmd = &cobra.Command{
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
+		engine, exists := config.GetEngine(engineName)
+		if !exists {
+			log.Fatal("Unknown engine name: ", engineName)
+		}
+
+		if !engine.Features.SupportsDocumentation {
+			color.Yellow("%s engine does not support documentation generation yet. Check back soon!", engineName)
+			return
+		}
+
 		switch engineName {
-		case GPTEngine:
+		case config.GPTEngine:
 			err := llm.DocumentCodeWithGPT(filePath)
 			if err != nil {
 				log.Fatalf("Failed to document code: %v", err)
@@ -50,16 +60,12 @@ var documentCmd = &cobra.Command{
 			color.Green("Code documented successfully!")
 			pathToOpen := fmt.Sprintf("code %s", filePath)
 			helpers.RunCommand(pathToOpen)
-		case GeminiEngine:
-			fmt.Println("Gemini engine is currently not supported for documentation. Check back soon!")
-		case DeepSeekEngine:
+		case config.DeepSeekEngine:
 			err := llm.DocumentCodeWithDeepSeek(filePath)
 			if err != nil {
 				log.Fatalf("Failed to document code: %v", err)
 			}
 			color.Green("Code documented successfully!")
-		default:
-			log.Fatal("Unknown engine name: ", engineName)
 		}
 	},
 }

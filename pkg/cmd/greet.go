@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/config"
 	"github.com/harshalranjhani/genie/internal/helpers/llm"
 	"github.com/harshalranjhani/genie/pkg/prompts"
 	"github.com/spf13/cobra"
@@ -35,25 +36,28 @@ Whether you're navigating complex commands or seeking general guidance, the Geni
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
+		_, exists := config.GetEngine(engineName)
+		if !exists {
+			log.Fatal("Unknown engine name: ", engineName)
+		}
+
 		c := color.New(color.FgRed)
 		switch engineName {
-		case GPTEngine:
+		case config.GPTEngine:
 			llm.GetGPTGeneralResponse(prompt, false)
-		case GeminiEngine:
+		case config.GeminiEngine:
 			strResp, err := llm.GetGeminiGeneralResponse(prompt, true, false)
 			if err != nil {
 				log.Fatal("Error getting response from Gemini: ", err)
 				os.Exit(1)
 			}
 			c.Println(formatMarkdownToPlainText(strResp))
-		case DeepSeekEngine:
+		case config.DeepSeekEngine:
 			err := llm.GetDeepSeekGeneralResponse(prompt, true, false)
 			if err != nil {
 				log.Fatal("Error getting response from DeepSeek: ", err)
 				os.Exit(1)
 			}
-		default:
-			log.Fatal("Unknown engine name: ", engineName)
 		}
 	},
 }

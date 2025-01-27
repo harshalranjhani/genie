@@ -9,6 +9,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/config"
 	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
@@ -33,10 +34,16 @@ var statusCmd = &cobra.Command{
 		// Get version from the Version constant
 		version := Version
 
-		// Get current engine
+		// Get current engine and its configuration
 		engineName, _ := keyring.Get(serviceName, "engineName")
 		if engineName == "" {
 			engineName = "Gemini (default)"
+		}
+
+		engine, exists := config.GetEngine(engineName)
+		modelName, _ := keyring.Get(serviceName, "modelName")
+		if modelName == "" && exists {
+			modelName = engine.DefaultModel
 		}
 
 		// Check API keys status
@@ -64,8 +71,22 @@ var statusCmd = &cobra.Command{
 		fmt.Printf("📌 %s: %s\n", color.HiBlackString("Version"), color.HiGreenString(version))
 		fmt.Printf("💻 %s: %s\n", color.HiBlackString("System"), color.HiGreenString(runtime.GOOS))
 		fmt.Printf("⚙️  %s: %s\n", color.HiBlackString("Engine"), color.HiGreenString(engineName))
+		if exists {
+			fmt.Printf("🤖 %s: %s\n", color.HiBlackString("Model"), color.HiGreenString(modelName))
+		}
 
-		// Add Verification Status section before Configuration Status
+		// Features Support
+		if exists {
+			fmt.Println("\n🔧 Features Support")
+			fmt.Println(strings.Repeat("─", 25))
+			printFeatureStatus("Image Generation", engine.Features.SupportsImageGen)
+			printFeatureStatus("Chat", engine.Features.SupportsChat)
+			printFeatureStatus("Safe Mode", engine.Features.SupportsSafeMode)
+			printFeatureStatus("Documentation", engine.Features.SupportsDocumentation)
+			printFeatureStatus("Reasoning", engine.Features.SupportsReasoning)
+		}
+
+		// Add Verification Status section
 		fmt.Println("\n🔐 Verification Status")
 		fmt.Println(strings.Repeat("─", 25))
 		if status != nil && status.Email != "" {
@@ -120,5 +141,14 @@ func printKeyStatus(name string, key string, reveal bool) {
 		fmt.Printf("   %s: %s\n", color.HiBlackString("Key"), color.HiBlackString(displayKey))
 	} else {
 		color.Yellow("! Not configured")
+	}
+}
+
+func printFeatureStatus(name string, supported bool) {
+	fmt.Printf("• %s: ", color.HiBlackString(name))
+	if supported {
+		color.Green("✓ Supported")
+	} else {
+		color.Yellow("✗ Not supported")
 	}
 }

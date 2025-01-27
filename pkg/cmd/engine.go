@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -46,33 +47,18 @@ It shows which engine is active (GPT or Gemini) and which specific model is bein
 
 		// Print available models for current engine
 		color.Cyan("\nAvailable Models:")
-		switch engineName {
-		case GPTEngine:
-			for _, model := range gptModels {
-				if model == modelName {
-					color.Green("  • %s (current)", model)
-				} else {
-					fmt.Printf("  • %s\n", model)
-				}
-			}
-		case GeminiEngine:
-			for _, model := range geminiModels {
-				if model == modelName {
-					color.Green("  • %s (current)", model)
-				} else {
-					fmt.Printf("  • %s\n", model)
-				}
-			}
-		case DeepSeekEngine:
-			for _, model := range deepseekModels {
-				if model == modelName {
-					color.Green("  • %s (current)", model)
-				} else {
-					fmt.Printf("  • %s\n", model)
-				}
-			}
-		default:
+		engine, exists := config.GetEngine(engineName)
+		if !exists {
 			color.Yellow("  No models available for engine: %s", engineName)
+			return
+		}
+
+		for _, model := range engine.Models {
+			if model == modelName {
+				color.Green("  • %s (current)", model)
+			} else {
+				fmt.Printf("  • %s\n", model)
+			}
 		}
 
 		// Print helpful commands

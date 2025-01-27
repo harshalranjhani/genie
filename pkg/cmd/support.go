@@ -20,7 +20,7 @@ func startPayment() error {
 	case "darwin":
 		err = exec.Command("open", paymentURL).Start()
 	default:
-		err = fmt.Errorf("unsupported platform")
+		err = fmt.Errorf("Unable to open payment page on your platform. Please open the payment page manually: %s", paymentURL)
 	}
 
 	return err

@@ -9,6 +9,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/config"
 	"github.com/harshalranjhani/genie/internal/helpers/llm"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
@@ -99,11 +100,11 @@ func runBugReport(cmd *cobra.Command, args []string) {
 
 	var bugReport string
 	switch engineName {
-	case GPTEngine:
+	case config.GPTEngine:
 		bugReport, err = llm.GenerateBugReportGPT(description, severity, category, assignee, priority)
-	case GeminiEngine:
+	case config.GeminiEngine:
 		bugReport, err = llm.GenerateBugReportGemini(description, severity, category, assignee, priority)
-	case DeepSeekEngine:
+	case config.DeepSeekEngine:
 		bugReport, err = llm.GenerateBugReportDeepSeek(description, severity, category, assignee, priority)
 	default:
 		s.Stop()

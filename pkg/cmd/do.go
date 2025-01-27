@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/config"
 	"github.com/harshalranjhani/genie/internal/helpers"
 	"github.com/harshalranjhani/genie/internal/helpers/llm"
 	"github.com/harshalranjhani/genie/pkg/prompts"
@@ -19,12 +20,12 @@ func init() {
 }
 
 var doCmd = &cobra.Command{
-	Use:   "do `prompt in quotes`",
-	Short: "command the genie to do something",
-	Long:  `This is a command to instruct the genie to do something.`,
+	Use:   "do",
+	Short: "Command the genie to do something",
+	Long:  `Command the genie to do something. For example: 'genie do "list all files in the current directory"'`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			cmd.Help()
+		if len(args) < 1 {
+			color.Red("Please provide a command for the genie")
 			return
 		}
 
@@ -48,12 +49,15 @@ var doCmd = &cobra.Command{
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
+		engine, exists := config.GetEngine(engineName)
+		if !exists {
+			log.Fatal("Unknown engine name: ", engineName)
+		}
+
 		if safeSettings {
 			color.Green("Safety settings are on.")
-			if engineName == GPTEngine {
-				color.Red("Safety settings are low by default for GPT engine.")
-			} else if engineName == DeepSeekEngine {
-				color.Red("Currently DeepSeek does not support safe mode. But we're still instructing it to be extra cautious for this particular request.")
+			if !engine.Features.SupportsSafeMode {
+				color.Red("Currently %s does not support safe mode. But we're still instructing it to be extra cautious for this particular request.", engineName)
 				prompt += " Please ensure the command is safe and does not contain any destructive behavior like deleting files, directories, etc. If it does, please reject it and just echo why you rejected"
 			}
 		} else {
@@ -61,23 +65,21 @@ var doCmd = &cobra.Command{
 		}
 
 		switch engineName {
-		case GPTEngine:
+		case config.GPTEngine:
 			err := llm.GetGPTCmdResponse(prompt, true)
 			if err != nil {
 				log.Fatal(err)
 			}
-		case GeminiEngine:
+		case config.GeminiEngine:
 			err := llm.GetGeminiCmdResponse(prompt, safeSettings)
 			if err != nil {
 				log.Fatal(err)
 			}
-		case DeepSeekEngine:
+		case config.DeepSeekEngine:
 			err := llm.GetDeepSeekCmdResponse(prompt, safeSettings)
 			if err != nil {
 				log.Fatal(err)
 			}
-		default:
-			log.Fatal("Unknown engine name: ", engineName)
 		}
 
 		if err != nil {
