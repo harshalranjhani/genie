@@ -5,11 +5,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/helpers"
 )
 
 type OllamaMessage struct {
@@ -47,7 +49,7 @@ func GetOllamaGeneralResponse(prompt string, model string, includeDir bool) erro
 		Messages: messages,
 		Stream:   true,
 		Options: map[string]interface{}{
-			"temperature": 0.7,
+			"temperature": 1.0,
 		},
 	}
 
@@ -85,6 +87,65 @@ func GetOllamaGeneralResponse(prompt string, model string, includeDir bool) erro
 	if err := scanner.Err(); err != nil {
 		fmt.Printf("Error reading stream: %v\n", err)
 	}
+
+	return nil
+}
+
+func GetOllamaCmdResponse(prompt string, model string, safeOn bool) error {
+	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("Analyzing: ")
+	s.Start()
+
+	// Prepare the request
+	messages := []OllamaMessage{
+		{
+			Role:    "user",
+			Content: prompt,
+		},
+	}
+
+	requestBody := OllamaRequest{
+		Model:    model,
+		Messages: messages,
+		Stream:   false,
+		Options: map[string]interface{}{
+			"temperature": 1.0,
+		},
+	}
+
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		s.Stop()
+		fmt.Printf("Failed to marshal request: %v\n", err)
+		return err
+	}
+
+	resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		s.Stop()
+		fmt.Printf("Failed to connect to Ollama: %v\n", err)
+		fmt.Println("Make sure Ollama is running locally (http://localhost:11434)")
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		s.Stop()
+		return err
+	}
+
+	var response OllamaResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		s.Stop()
+		return err
+	}
+
+	command := response.Message.Content
+
+	s.Stop()
+	fmt.Println("Running the command: ", command)
+	helpers.RunCommand(command)
 
 	return nil
 }

@@ -80,6 +80,11 @@ var doCmd = &cobra.Command{
 			if err != nil {
 				log.Fatal(err)
 			}
+		case config.OllamaEngine:
+			err := llm.GetOllamaCmdResponse(prompt, "llama3.2", safeSettings)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		if err != nil {
