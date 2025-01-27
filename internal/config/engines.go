@@ -1,30 +1,15 @@
 package config
 
+import "github.com/harshalranjhani/genie/internal/structs"
+
 const (
 	GeminiEngine   = "Gemini"
 	GPTEngine      = "GPT"
 	DeepSeekEngine = "DeepSeek"
 )
 
-// Engine represents an AI engine configuration
-type Engine struct {
-	Name         string
-	Models       []string
-	DefaultModel string
-	Features     EngineFeatures
-}
-
-// EngineFeatures represents supported features for an engine
-type EngineFeatures struct {
-	SupportsImageGen      bool
-	SupportsChat          bool
-	SupportsSafeMode      bool
-	SupportsReasoning     bool
-	SupportsDocumentation bool
-}
-
 // EngineMap stores all available engines
-var EngineMap = map[string]Engine{
+var EngineMap = map[string]structs.Engine{
 	"GPT": {
 		Name: "GPT",
 		Models: []string{
@@ -38,7 +23,7 @@ var EngineMap = map[string]Engine{
 			"gpt-4o-mini-2024-07-18",
 		},
 		DefaultModel: "gpt-4",
-		Features: EngineFeatures{
+		Features: structs.EngineFeatures{
 			SupportsImageGen:      true,
 			SupportsChat:          true,
 			SupportsSafeMode:      true,
@@ -54,7 +39,7 @@ var EngineMap = map[string]Engine{
 			"gemini-1.5-flash-8b",
 		},
 		DefaultModel: "gemini-1.5-pro",
-		Features: EngineFeatures{
+		Features: structs.EngineFeatures{
 			SupportsImageGen:      false,
 			SupportsChat:          true,
 			SupportsSafeMode:      true,
@@ -69,7 +54,7 @@ var EngineMap = map[string]Engine{
 			"deepseek-reasoner",
 		},
 		DefaultModel: "deepseek-chat",
-		Features: EngineFeatures{
+		Features: structs.EngineFeatures{
 			SupportsImageGen:      false,
 			SupportsChat:          true,
 			SupportsSafeMode:      false,
@@ -80,7 +65,7 @@ var EngineMap = map[string]Engine{
 }
 
 // Helper functions
-func GetEngine(name string) (Engine, bool) {
+func GetEngine(name string) (structs.Engine, bool) {
 	engine, exists := EngineMap[name]
 	return engine, exists
 }

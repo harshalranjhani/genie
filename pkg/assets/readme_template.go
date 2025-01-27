@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/harshalranjhani/genie/internal/middleware"
+	"github.com/harshalranjhani/genie/internal/structs"
 )
 
 var defaultTemplate = `# {{.projectName}}
@@ -111,9 +112,7 @@ func getProReadmeTemplate(templateName string, token string) string {
 		return defaultTemplate
 	}
 
-	var response struct {
-		Template string `json:"template"`
-	}
+	var response structs.ReadmeTemplateResponse
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
 		fmt.Println("Error decoding response:", err)

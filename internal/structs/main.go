@@ -54,3 +54,24 @@ type UserStatus struct {
 	Token  string `json:"token"`
 	Expiry int64  `json:"expiry"`
 }
+
+type ReadmeTemplateResponse struct {
+	Template string `json:"template"`
+}
+
+// Engine represents an AI engine configuration
+type Engine struct {
+	Name         string
+	Models       []string
+	DefaultModel string
+	Features     EngineFeatures
+}
+
+// EngineFeatures represents supported features for an engine
+type EngineFeatures struct {
+	SupportsImageGen      bool
+	SupportsChat          bool
+	SupportsSafeMode      bool
+	SupportsReasoning     bool
+	SupportsDocumentation bool
+}
