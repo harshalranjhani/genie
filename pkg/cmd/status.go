@@ -56,6 +56,12 @@ var statusCmd = &cobra.Command{
 		// Add verification status check
 		status, _ := middleware.LoadStatus()
 
+		// Get Ollama URL
+		ollamaURL, _ := keyring.Get(serviceName, ollamaURLKeyName)
+		if ollamaURL == "" {
+			ollamaURL = "http://localhost:11434 (default)"
+		}
+
 		time.Sleep(500 * time.Millisecond)
 		s.Stop()
 
@@ -106,6 +112,10 @@ var statusCmd = &cobra.Command{
 		printKeyStatus("Gemini API", geminiKey, revealKeys)
 		printKeyStatus("DeepSeek API", deepseekKey, revealKeys)
 		printKeyStatus("Replicate API", replicateKey, revealKeys)
+
+		fmt.Printf("🌐 %s: ", color.HiBlackString("Ollama URL"))
+		color.Green("✓ Configured")
+		fmt.Printf("   %s: %s\n", color.HiBlackString("URL"), color.HiBlackString(ollamaURL))
 
 		// Ignore List Status
 		fmt.Printf("📝 %s: ", color.HiBlackString("Ignore List"))

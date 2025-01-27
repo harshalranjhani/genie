@@ -81,7 +81,11 @@ var doCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 		case config.OllamaEngine:
-			err := llm.GetOllamaCmdResponse(prompt, "llama3.2", safeSettings)
+			model, err := keyring.Get(serviceName, modelAccountKey)
+			if err != nil {
+				log.Fatal("Error retrieving model name from keyring: ", err)
+			}
+			err = llm.GetOllamaCmdResponse(prompt, model, safeSettings)
 			if err != nil {
 				log.Fatal(err)
 			}

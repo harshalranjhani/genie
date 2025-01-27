@@ -92,7 +92,11 @@ var tellCmd = &cobra.Command{
 				os.Exit(1)
 			}
 		case config.OllamaEngine:
-			err := llm.GetOllamaGeneralResponse(prompt, "llama3.2", includeDir)
+			model, err := keyring.Get(serviceName, modelAccountKey)
+			if err != nil {
+				log.Fatal("Error retrieving model name from keyring: ", err)
+			}
+			err = llm.GetOllamaGeneralResponse(prompt, model, includeDir)
 			if err != nil {
 				log.Fatal("Error getting response from Ollama: ", err)
 				os.Exit(1)

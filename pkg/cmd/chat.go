@@ -52,7 +52,11 @@ var chatCmd = &cobra.Command{
 		case config.DeepSeekEngine:
 			llm.StartDeepSeekChat()
 		case config.OllamaEngine:
-			llm.StartOllamaChat("llama3.2")
+			model, err := keyring.Get(serviceName, modelAccountKey)
+			if err != nil {
+				log.Fatal("Error retrieving model name from keyring: ", err)
+			}
+			llm.StartOllamaChat(model)
 		}
 	},
 }

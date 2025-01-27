@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -107,7 +108,11 @@ func runBugReport(cmd *cobra.Command, args []string) {
 	case config.DeepSeekEngine:
 		bugReport, err = llm.GenerateBugReportDeepSeek(description, severity, category, assignee, priority)
 	case config.OllamaEngine:
-		bugReport, err = llm.GenerateBugReportOllama(description, severity, category, assignee, priority, "llama3.2")
+		model, err := keyring.Get(serviceName, modelAccountKey)
+		if err != nil {
+			log.Fatal("Error retrieving model name from keyring: ", err)
+		}
+		bugReport, err = llm.GenerateBugReportOllama(description, severity, category, assignee, priority, model)
 	default:
 		s.Stop()
 		color.Red("Unknown engine: %s", engineName)

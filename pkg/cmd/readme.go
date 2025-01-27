@@ -69,11 +69,11 @@ var readmeCmd = &cobra.Command{
 				log.Fatalf("Failed to generate README with DeepSeek: %v", err)
 			}
 		case config.OllamaEngine:
-			_, err := keyring.Get(serviceName, "modelName")
+			model, err := keyring.Get(serviceName, modelAccountKey)
 			if err != nil {
-				modelName = "mistral" // default model
+				log.Fatal("Error retrieving model name from keyring: ", err)
 			}
-			err = llm.GenerateReadmeWithOllama(readmePath, templateName, "llama3.2")
+			err = llm.GenerateReadmeWithOllama(readmePath, templateName, model)
 			if err != nil {
 				log.Fatalf("Failed to generate README with Ollama: %v", err)
 			}

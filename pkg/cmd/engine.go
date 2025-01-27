@@ -47,17 +47,36 @@ It shows which engine is active (GPT or Gemini) and which specific model is bein
 
 		// Print available models for current engine
 		color.Cyan("\nAvailable Models:")
-		engine, exists := config.GetEngine(engineName)
-		if !exists {
-			color.Yellow("  No models available for engine: %s", engineName)
-			return
-		}
+		if engineName == config.OllamaEngine {
+			models, err := getRunningOllamaModels()
+			if err != nil {
+				color.Red("Error: %v", err)
+				return
+			}
+			if len(models) == 0 {
+				color.Yellow("  No running Ollama models found. Please start some models first.")
+				return
+			}
+			for _, model := range models {
+				if model == modelName {
+					color.Green("  • %s (current)", model)
+				} else {
+					fmt.Printf("  • %s\n", model)
+				}
+			}
+		} else {
+			engine, exists := config.GetEngine(engineName)
+			if !exists {
+				color.Yellow("  No models available for engine: %s", engineName)
+				return
+			}
 
-		for _, model := range engine.Models {
-			if model == modelName {
-				color.Green("  • %s (current)", model)
-			} else {
-				fmt.Printf("  • %s\n", model)
+			for _, model := range engine.Models {
+				if model == modelName {
+					color.Green("  • %s (current)", model)
+				} else {
+					fmt.Printf("  • %s\n", model)
+				}
 			}
 		}
 

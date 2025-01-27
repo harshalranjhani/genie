@@ -67,7 +67,11 @@ var documentCmd = &cobra.Command{
 			}
 			color.Green("Code documented successfully!")
 		case config.OllamaEngine:
-			err := llm.DocumentCodeWithOllama(filePath, "llama3.2")
+			model, err := keyring.Get(serviceName, modelAccountKey)
+			if err != nil {
+				log.Fatal("Error retrieving model name from keyring: ", err)
+			}
+			err = llm.DocumentCodeWithOllama(filePath, model)
 			if err != nil {
 				log.Fatalf("Failed to document code: %v", err)
 			}

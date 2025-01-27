@@ -23,6 +23,7 @@ import (
 	"github.com/harshalranjhani/genie/internal/helpers"
 	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/harshalranjhani/genie/pkg/prompts"
+	"github.com/zalando/go-keyring"
 )
 
 type OllamaMessage struct {
@@ -41,6 +42,14 @@ type OllamaResponse struct {
 	Model   string        `json:"model"`
 	Message OllamaMessage `json:"message"`
 	Done    bool          `json:"done"`
+}
+
+func getOllamaURL() string {
+	url, err := keyring.Get("genie", "ollama_url")
+	if err != nil || url == "" {
+		return "http://localhost:11434"
+	}
+	return url
 }
 
 func GetOllamaGeneralResponse(prompt string, model string, includeDir bool) error {
@@ -71,7 +80,7 @@ func GetOllamaGeneralResponse(prompt string, model string, includeDir bool) erro
 		return err
 	}
 
-	resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(getOllamaURL()+"/api/chat", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		s.Stop()
 		fmt.Printf("Failed to connect to Ollama: %v\n", err)
@@ -131,7 +140,7 @@ func GetOllamaCmdResponse(prompt string, model string, safeOn bool) error {
 		return err
 	}
 
-	resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(getOllamaURL()+"/api/chat", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		s.Stop()
 		fmt.Printf("Failed to connect to Ollama: %v\n", err)
@@ -200,7 +209,7 @@ func DocumentCodeWithOllama(filePath string, model string) error {
 		return fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(getOllamaURL()+"/api/chat", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("failed to connect to Ollama: %w", err)
 	}
@@ -292,7 +301,7 @@ func GenerateReadmeWithOllama(readmePath string, templateName string, model stri
 		return fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(getOllamaURL()+"/api/chat", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("failed to connect to Ollama: %w", err)
 	}
@@ -344,7 +353,7 @@ func GenerateBugReportOllama(description, severity, category, assignee, priority
 		return "", fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+	resp, err := http.Post(getOllamaURL()+"/api/chat", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return "", fmt.Errorf("failed to connect to Ollama: %w", err)
 	}
@@ -430,7 +439,7 @@ func StartOllamaChat(model string) {
 			exportOllamaChatHistory(messages)
 			continue
 		case constants.EmailCommand:
-			emailOllamaChatHistory(messages)
+			emailOllamaChatHistory(messages, model)
 			continue
 		}
 
@@ -458,7 +467,7 @@ func StartOllamaChat(model string) {
 			log.Fatal(err)
 		}
 
-		resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+		resp, err := http.Post(getOllamaURL()+"/api/chat", "application/json", bytes.NewBuffer(jsonData))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -532,7 +541,7 @@ func exportOllamaChatHistory(messages []OllamaMessage) {
 	fmt.Println(color.GreenString(successMsg))
 }
 
-func emailOllamaChatHistory(messages []OllamaMessage) {
+func emailOllamaChatHistory(messages []OllamaMessage, model string) {
 	if len(messages) <= 1 {
 		fmt.Printf("%s No chat history available to email.\n", color.RedString("❌"))
 		return
@@ -565,7 +574,7 @@ func emailOllamaChatHistory(messages []OllamaMessage) {
 
 	payload := map[string]interface{}{
 		"timestamp": time.Now().Format(time.RFC3339),
-		"model":     "llama2", // You might want to make this configurable
+		"model":     model,
 		"messages":  chatMessages,
 		"metadata": map[string]string{
 			"sessionId": fmt.Sprintf("ollama-%d", time.Now().Unix()),

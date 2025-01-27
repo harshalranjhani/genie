@@ -81,19 +81,9 @@ var EngineMap = map[string]Engine{
 	"Ollama": {
 		Name: "Ollama",
 		Models: []string{
-			"llama2",
-			"llama2:13b",
-			"llama2:70b",
-			"codellama",
-			"mistral",
-			"mixtral",
-			"phi",
-			"neural-chat",
-			"starling-lm",
-			"orca-mini",
-			"vicuna",
+			"llama3.2",
 		},
-		DefaultModel: "llama2",
+		DefaultModel: "llama3.2",
 		Features: EngineFeatures{
 			SupportsImageGen:      false,
 			SupportsChat:          true,
