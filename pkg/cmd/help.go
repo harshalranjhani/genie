@@ -32,6 +32,7 @@ func addEmoji(cmdName string) string {
 		"support":    "❤️",
 		"switch":     "🔀",
 		"tell":       "💭",
+		"use":        "🎨",
 		"verify":     "✅",
 		"version":    "📌",
 		"bug":        "🐛",

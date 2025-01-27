@@ -36,7 +36,7 @@ Whether you're navigating complex commands or seeking general guidance, the Geni
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
-		_, exists := config.GetEngine(engineName)
+		_, exists := config.CheckAndGetEngine(engineName)
 		if !exists {
 			log.Fatal("Unknown engine name: ", engineName)
 		}
@@ -58,6 +58,12 @@ Whether you're navigating complex commands or seeking general guidance, the Geni
 				log.Fatal("Error getting response from DeepSeek: ", err)
 				os.Exit(1)
 			}
+		case config.OllamaEngine:
+			model, err := keyring.Get(serviceName, modelAccountKey)
+			if err != nil {
+				log.Fatal("Error retrieving model name from keyring: ", err)
+			}
+			llm.GetOllamaGeneralResponse(prompt, model, false)
 		}
 	},
 }

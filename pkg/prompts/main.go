@@ -85,7 +85,7 @@ or in javascript:
 // genie:heading: This is a heading
 // genie:subheading: This is a subheading
 
-Make sure to match the exact format for the comments to be detected correctly. The format is genie:heading: for headings and genie:subheading: for subheadings. Remember to add a space after the colon and before the text. Also add a space after the comment marker (# or //) and before the genie keyword. Remember there cannot be multiple genie headings in one file, but there can be multiple genie subheadings under one heading.
+Make sure to match the exact format for the comments to be detected correctly. The format is genie:heading: for headings and genie:subheading: for subheadings. Remember to add a space after the colon and before the text. Also add a space after the comment marker (# or //) and before the genie keyword. Remember there cannot be multiple genie headings in one file, but there can be multiple genie subheadings under one heading. Remember only two options are allowed, either heading or subheading. No other options are allowed.
 Here is the code:
 %s\nRemember to output the whole code including all imports, exports, functions, tests, etc. You are supposed to add genie comments wherever necessary and then return the whole code. Give the output as code only, no other text is required.`, content)
 }

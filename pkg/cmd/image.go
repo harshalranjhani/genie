@@ -31,7 +31,7 @@ var imageCmd = &cobra.Command{
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
-		engine, exists := config.GetEngine(engineName)
+		engine, exists := config.CheckAndGetEngine(engineName)
 		if !exists {
 			log.Fatal("Unknown engine name: ", engineName)
 		}

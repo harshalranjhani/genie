@@ -1,11 +1,16 @@
 package config
 
-import "github.com/harshalranjhani/genie/internal/structs"
+import (
+	"strings"
+
+	"github.com/harshalranjhani/genie/internal/structs"
+)
 
 const (
 	GeminiEngine   = "Gemini"
 	GPTEngine      = "GPT"
 	DeepSeekEngine = "DeepSeek"
+	OllamaEngine   = "Ollama"
 )
 
 // EngineMap stores all available engines
@@ -62,12 +67,31 @@ var EngineMap = map[string]structs.Engine{
 			SupportsDocumentation: true,
 		},
 	},
+	"Ollama": {
+		Name: "Ollama",
+		Models: []string{
+			"llama3.2",
+		},
+		DefaultModel: "llama3.2",
+		Features: structs.EngineFeatures{
+			SupportsImageGen:      false,
+			SupportsChat:          true,
+			SupportsSafeMode:      false,
+			SupportsReasoning:     false,
+			SupportsDocumentation: true,
+		},
+	},
 }
 
-// Helper functions
-func GetEngine(name string) (structs.Engine, bool) {
-	engine, exists := EngineMap[name]
-	return engine, exists
+func CheckAndGetEngine(name string) (structs.Engine, bool) {
+	lookupName := strings.ToLower(name)
+
+	for engineName, engine := range EngineMap {
+		if strings.ToLower(engineName) == lookupName {
+			return engine, true
+		}
+	}
+	return structs.Engine{}, false
 }
 
 func GetNextEngine(currentEngine string) string {
@@ -77,6 +101,8 @@ func GetNextEngine(currentEngine string) string {
 	case "GPT":
 		return "DeepSeek"
 	case "DeepSeek":
+		return "Ollama"
+	case "Ollama":
 		return "Gemini"
 	default:
 		return "Gemini"

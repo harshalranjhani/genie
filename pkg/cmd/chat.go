@@ -25,7 +25,7 @@ var chatCmd = &cobra.Command{
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
-		engine, exists := config.GetEngine(engineName)
+		engine, exists := config.CheckAndGetEngine(engineName)
 		if !exists {
 			log.Fatal("Unknown engine name: ", engineName)
 		}
@@ -51,6 +51,12 @@ var chatCmd = &cobra.Command{
 			llm.StartGeminiChat(safeSettings)
 		case config.DeepSeekEngine:
 			llm.StartDeepSeekChat()
+		case config.OllamaEngine:
+			model, err := keyring.Get(serviceName, modelAccountKey)
+			if err != nil {
+				log.Fatal("Error retrieving model name from keyring: ", err)
+			}
+			llm.StartOllamaChat(model)
 		}
 	},
 }

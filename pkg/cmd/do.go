@@ -49,7 +49,7 @@ var doCmd = &cobra.Command{
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
-		engine, exists := config.GetEngine(engineName)
+		engine, exists := config.CheckAndGetEngine(engineName)
 		if !exists {
 			log.Fatal("Unknown engine name: ", engineName)
 		}
@@ -77,6 +77,15 @@ var doCmd = &cobra.Command{
 			}
 		case config.DeepSeekEngine:
 			err := llm.GetDeepSeekCmdResponse(prompt, safeSettings)
+			if err != nil {
+				log.Fatal(err)
+			}
+		case config.OllamaEngine:
+			model, err := keyring.Get(serviceName, modelAccountKey)
+			if err != nil {
+				log.Fatal("Error retrieving model name from keyring: ", err)
+			}
+			err = llm.GetOllamaCmdResponse(prompt, model, safeSettings)
 			if err != nil {
 				log.Fatal(err)
 			}

@@ -19,8 +19,9 @@ var keys = map[int]string{
 	3: deepseekKeyName,
 	4: replicateKeyName,
 	5: ignoreListPathKeyName,
-	6: "all",
-	7: "purge",
+	6: ollamaURLKeyName,
+	7: "all",
+	8: "purge",
 }
 
 func resetKey(keyName string) {
@@ -46,7 +47,7 @@ func resetKeys() {
 	time.Sleep(500 * time.Millisecond)
 	s.Stop()
 
-	keys := []string{openAIKeyName, geminiKeyName, deepseekKeyName, ignoreListPathKeyName, replicateKeyName}
+	keys := []string{openAIKeyName, geminiKeyName, deepseekKeyName, ignoreListPathKeyName, replicateKeyName, ollamaURLKeyName}
 	for _, key := range keys {
 		if err := keyring.Delete(serviceName, key); err != nil {
 			color.Red("✘ Failed to delete %s: %s\n", key, err)
@@ -64,7 +65,7 @@ func purgeGenieService() {
 	s.Stop()
 
 	// Delete all known keys first
-	keys := []string{openAIKeyName, geminiKeyName, deepseekKeyName, ignoreListPathKeyName, replicateKeyName}
+	keys := []string{openAIKeyName, geminiKeyName, deepseekKeyName, ignoreListPathKeyName, replicateKeyName, ollamaURLKeyName}
 	for _, key := range keys {
 		_ = keyring.Delete(serviceName, key)
 	}
@@ -101,8 +102,9 @@ You can choose to reset individual keys or all of them at once.
 				"3": "Reset DeepSeek API Key 🔄",
 				"4": "Reset Replicate API Key 🔄",
 				"5": "Reset Ignore List Path 📝",
-				"6": "Reset All Keys ⚠️",
-				"7": "Purge All Genie Data 🗑️",
+				"6": "Reset Ollama URL 🌐",
+				"7": "Reset All Keys ⚠️",
+				"8": "Purge All Genie Data 🗑️",
 				"0": "Exit 👋",
 			}
 
@@ -176,6 +178,8 @@ You can choose to reset individual keys or all of them at once.
 					prompt = "Enter your Replicate API Key:"
 				case deepseekKeyName:
 					prompt = "Enter your DeepSeek API Key:"
+				case ollamaURLKeyName:
+					prompt = "Enter your Ollama URL:"
 				default:
 					continue
 				}

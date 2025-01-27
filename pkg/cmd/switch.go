@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/fatih/color"
@@ -13,6 +15,7 @@ import (
 const (
 	accountName     = "engineName"
 	modelAccountKey = "modelName"
+	ollamaAPIURL    = "http://localhost:11434/api/ps"
 )
 
 var (
@@ -45,6 +48,18 @@ var (
 		"deepseek-reasoner",
 	}
 )
+
+type OllamaModel struct {
+	Name    string `json:"name"`
+	Model   string `json:"model"`
+	Details struct {
+		ParameterSize string `json:"parameter_size"`
+	} `json:"details"`
+}
+
+type OllamaResponse struct {
+	Models []OllamaModel `json:"models"`
+}
 
 func init() {
 	switchCmd.Flags().BoolVar(&listModels, "list-models", false, "List available models for the current engine")
@@ -101,7 +116,7 @@ var switchCmd = &cobra.Command{
 
 		// Modified engine switching logic
 		var newEngine string
-		currentEngine, exists := config.GetEngine(engineName)
+		currentEngine, exists := config.CheckAndGetEngine(engineName)
 		if !exists {
 			newEngine = "Gemini"
 		} else {
@@ -114,7 +129,7 @@ var switchCmd = &cobra.Command{
 		}
 
 		// Set default model for the new engine
-		newEngineConfig, _ := config.GetEngine(newEngine)
+		newEngineConfig, _ := config.CheckAndGetEngine(newEngine)
 		defaultModel := newEngineConfig.DefaultModel
 		if err := keyring.Set(serviceName, modelAccountKey, defaultModel); err != nil {
 			color.Red("✗ Failed to set default model.")
@@ -179,21 +194,56 @@ func printAvailableModels(engine string) {
 	fmt.Println("• Change model: genie switch --model <model-name>")
 }
 
+func getRunningOllamaModels() ([]string, error) {
+	resp, err := http.Get(ollamaAPIURL)
+	if err != nil {
+		return nil, fmt.Errorf("Ollama server not running. Please ensure your Ollama server is running")
+	}
+	defer resp.Body.Close()
+
+	var ollamaResp OllamaResponse
+	if err := json.NewDecoder(resp.Body).Decode(&ollamaResp); err != nil {
+		return nil, fmt.Errorf("Failed to parse Ollama response: %v", err)
+	}
+
+	var models []string
+	for _, model := range ollamaResp.Models {
+		models = append(models, model.Name)
+	}
+	return models, nil
+}
+
 func switchModel(engine, model string) error {
-	fmt.Println(color.HiMagentaString("🔄 Switching Model"))
-	fmt.Println(strings.Repeat("─", 50))
-
-	color.Cyan("Current Engine:")
-	color.Green("  • %s", engine)
-
 	var validModels []string
+
 	switch engine {
+	case config.OllamaEngine:
+		models, err := getRunningOllamaModels()
+		if err != nil {
+			color.Red("\nError: %v", err)
+			return nil
+		}
+		if len(models) == 0 {
+			color.Yellow("\nNo running Ollama models found. Please start some models first.")
+			return nil
+		}
+		validModels = models
 	case config.GPTEngine:
 		validModels = gptModels
 	case config.GeminiEngine:
 		validModels = geminiModels
 	case config.DeepSeekEngine:
 		validModels = deepseekModels
+	}
+
+	// If listing models is requested
+	if listModels {
+		color.Cyan("\nAvailable models for %s:", engine)
+		for _, m := range validModels {
+			fmt.Printf("  • %s\n", m)
+		}
+		fmt.Println(strings.Repeat("─", 50))
+		return nil
 	}
 
 	// Validate model name

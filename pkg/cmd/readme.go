@@ -40,7 +40,7 @@ var readmeCmd = &cobra.Command{
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
-		_, exists := config.GetEngine(engineName)
+		_, exists := config.CheckAndGetEngine(engineName)
 		if !exists {
 			log.Fatal("Unknown engine name: ", engineName)
 		}
@@ -67,6 +67,15 @@ var readmeCmd = &cobra.Command{
 			err := llm.GenerateReadmeWithDeepSeek(readmePath, templateName)
 			if err != nil {
 				log.Fatalf("Failed to generate README with DeepSeek: %v", err)
+			}
+		case config.OllamaEngine:
+			model, err := keyring.Get(serviceName, modelAccountKey)
+			if err != nil {
+				log.Fatal("Error retrieving model name from keyring: ", err)
+			}
+			err = llm.GenerateReadmeWithOllama(readmePath, templateName, model)
+			if err != nil {
+				log.Fatalf("Failed to generate README with Ollama: %v", err)
 			}
 		}
 

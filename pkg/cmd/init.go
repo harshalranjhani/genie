@@ -23,6 +23,7 @@ const geminiKeyName = "gemini_api_key"
 const ignoreListPathKeyName = "ignore_list_path"
 const replicateKeyName = "replicate_api_key"
 const deepseekKeyName = "deepseek_api_key"
+const ollamaURLKeyName = "ollama_url"
 
 func getAPIKeyFromUser(promptMessage string) string {
 	fmt.Print(color.HiBlackString("Enter your key: "))
@@ -46,6 +47,47 @@ func storeKeyIfNotPresent(accountName string, promptMessage string, emoji string
 		fmt.Println(color.HiBlackString("────────────────────────────────────"))
 
 		apiKey = getAPIKeyFromUser(promptMessage)
+
+		s.Suffix = color.HiBlackString(" Storing key securely...")
+		s.Start()
+		err := keyring.Set(serviceName, accountName, apiKey)
+		time.Sleep(500 * time.Millisecond)
+		s.Stop()
+
+		if err != nil {
+			color.Red("❌ Failed to store %s: %s\n", accountName, err)
+			os.Exit(1)
+		}
+		color.Green("✅ Successfully stored %s\n", accountName)
+	}
+
+	return apiKey
+}
+
+func storeKeyWithDefault(accountName string, promptMessage string, emoji string, defaultValue string) string {
+	s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+	s.Suffix = color.HiBlackString(" Checking existing keys...")
+	s.Start()
+
+	apiKey, err := keyring.Get(serviceName, accountName)
+	time.Sleep(1 * time.Second)
+	s.Stop()
+
+	if err != nil {
+		fmt.Println(color.HiBlackString("\n────────────────────────────────────"))
+		fmt.Printf("%s %s\n", emoji, color.CyanString(promptMessage))
+		fmt.Println(color.HiBlackString("────────────────────────────────────"))
+
+		fmt.Print(color.HiBlackString("Enter your key (press Enter for default): "))
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		input := scanner.Text()
+
+		if input == "" {
+			apiKey = defaultValue
+		} else {
+			apiKey = input
+		}
 
 		s.Suffix = color.HiBlackString(" Storing key securely...")
 		s.Start()
@@ -99,6 +141,10 @@ Let's get started! 🚀
 		deepseekKey := storeKeyIfNotPresent(deepseekKeyName, "Enter your DeepSeek API Key", "🔄")
 		replicateKey := storeKeyIfNotPresent(replicateKeyName, "Enter your Replicate API Key", "🔄")
 		ignoreListPath := storeKeyIfNotPresent(ignoreListPathKeyName, "Enter the path to your ignore list file", "📝")
+
+		// Add Ollama URL with default value
+		ollamaURL := storeKeyWithDefault(ollamaURLKeyName, "Enter your Ollama URL (default: http://localhost:11434)", "🌐", "http://localhost:11434")
+
 		// Set default engine
 		s := spinner.New(spinner.CharSets[11], 100*time.Millisecond)
 		s.Suffix = color.HiBlackString(" Setting default engine...")
@@ -123,6 +169,7 @@ Let's get started! 🚀
 		fmt.Printf("%s DeepSeek API Key: %s\n", color.HiBlackString("└─ 🔄"), maskKey(deepseekKey))
 		fmt.Printf("%s Replicate API Key: %s\n", color.HiBlackString("├─ 🔄"), maskKey(replicateKey))
 		fmt.Printf("%s Ignore List Path: %s\n", color.HiBlackString("├─ 📝"), ignoreListPath)
+		fmt.Printf("%s Ollama URL: %s\n", color.HiBlackString("├─ 🌐"), ollamaURL)
 
 		// Next steps
 		fmt.Println(color.CyanString("\n📚 Next Steps"))

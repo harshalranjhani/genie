@@ -41,7 +41,7 @@ var documentCmd = &cobra.Command{
 			log.Fatal("Error retrieving engine name from keyring:", err)
 		}
 
-		engine, exists := config.GetEngine(engineName)
+		engine, exists := config.CheckAndGetEngine(engineName)
 		if !exists {
 			log.Fatal("Unknown engine name: ", engineName)
 		}
@@ -62,6 +62,16 @@ var documentCmd = &cobra.Command{
 			helpers.RunCommand(pathToOpen)
 		case config.DeepSeekEngine:
 			err := llm.DocumentCodeWithDeepSeek(filePath)
+			if err != nil {
+				log.Fatalf("Failed to document code: %v", err)
+			}
+			color.Green("Code documented successfully!")
+		case config.OllamaEngine:
+			model, err := keyring.Get(serviceName, modelAccountKey)
+			if err != nil {
+				log.Fatal("Error retrieving model name from keyring: ", err)
+			}
+			err = llm.DocumentCodeWithOllama(filePath, model)
 			if err != nil {
 				log.Fatalf("Failed to document code: %v", err)
 			}
