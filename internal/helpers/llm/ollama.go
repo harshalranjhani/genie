@@ -8,6 +8,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -227,6 +229,84 @@ func DocumentCodeWithOllama(filePath string, model string) error {
 	err = ioutil.WriteFile(filePath, []byte(strings.TrimSpace(documentedContent)), 0644)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func GenerateReadmeWithOllama(readmePath string, templateName string, model string) error {
+	s := spinner.New(spinner.CharSets[14], 100*time.Millisecond)
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
+	rootDir, err := helpers.GetCurrentDirectoriesAndFiles(cwd)
+	if err != nil {
+		return fmt.Errorf("failed to get directory structure: %w", err)
+	}
+
+	s.Prefix = color.HiCyanString("Generating README: ")
+	s.Start()
+	defer s.Stop()
+
+	var repoData strings.Builder
+	helpers.PrintData(&repoData, rootDir, 0)
+
+	sanitizedRepoData := helpers.SanitizeUTF8(repoData.String())
+
+	// get project name from root folder name
+	projectName := filepath.Base(cwd)
+
+	prompt := prompts.GetReadmePrompt(sanitizedRepoData, templateName, projectName)
+
+	// Prepare the request
+	messages := []OllamaMessage{
+		{
+			Role:    "system",
+			Content: "You are a helpful assistant who generates README files.",
+		},
+		{
+			Role:    "user",
+			Content: prompt,
+		},
+	}
+
+	requestBody := OllamaRequest{
+		Model:    model,
+		Messages: messages,
+		Stream:   false,
+		Options: map[string]interface{}{
+			"temperature": 1.0,
+		},
+	}
+
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to connect to Ollama: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var response OllamaResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		return fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	generatedText := response.Message.Content
+
+	if err := helpers.ProcessTemplateResponse(templateName, generatedText, readmePath); err != nil {
+		return fmt.Errorf("failed to process template response: %w", err)
 	}
 
 	return nil
