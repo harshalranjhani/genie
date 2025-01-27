@@ -66,6 +66,12 @@ var documentCmd = &cobra.Command{
 				log.Fatalf("Failed to document code: %v", err)
 			}
 			color.Green("Code documented successfully!")
+		case config.OllamaEngine:
+			err := llm.DocumentCodeWithOllama(filePath, "llama3.2")
+			if err != nil {
+				log.Fatalf("Failed to document code: %v", err)
+			}
+			color.Green("Code documented successfully!")
 		}
 	},
 }
