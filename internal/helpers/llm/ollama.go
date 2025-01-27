@@ -311,3 +311,53 @@ func GenerateReadmeWithOllama(readmePath string, templateName string, model stri
 
 	return nil
 }
+
+func GenerateBugReportOllama(description, severity, category, assignee, priority, model string) (string, error) {
+	// Prepare the request
+	messages := []OllamaMessage{
+		{
+			Role:    "system",
+			Content: "You are a helpful software engineer who writes clear, detailed bug reports.",
+		},
+		{
+			Role:    "user",
+			Content: prompts.GetBugReportPrompt(description, severity, category, assignee, priority),
+		},
+	}
+
+	requestBody := OllamaRequest{
+		Model:    model,
+		Messages: messages,
+		Stream:   false,
+		Options: map[string]interface{}{
+			"temperature": 0.7,
+		},
+	}
+
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return "", fmt.Errorf("failed to connect to Ollama: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var response OllamaResponse
+	if err := json.Unmarshal(body, &response); err != nil {
+		return "", fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	if response.Message.Content == "" {
+		return "", fmt.Errorf("no response generated")
+	}
+
+	return response.Message.Content, nil
+}

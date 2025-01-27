@@ -106,6 +106,8 @@ func runBugReport(cmd *cobra.Command, args []string) {
 		bugReport, err = llm.GenerateBugReportGemini(description, severity, category, assignee, priority)
 	case config.DeepSeekEngine:
 		bugReport, err = llm.GenerateBugReportDeepSeek(description, severity, category, assignee, priority)
+	case config.OllamaEngine:
+		bugReport, err = llm.GenerateBugReportOllama(description, severity, category, assignee, priority, "llama3.2")
 	default:
 		s.Stop()
 		color.Red("Unknown engine: %s", engineName)
