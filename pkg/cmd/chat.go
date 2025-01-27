@@ -51,6 +51,8 @@ var chatCmd = &cobra.Command{
 			llm.StartGeminiChat(safeSettings)
 		case config.DeepSeekEngine:
 			llm.StartDeepSeekChat()
+		case config.OllamaEngine:
+			llm.StartOllamaChat("llama3.2")
 		}
 	},
 }

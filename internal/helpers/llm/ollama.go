@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,8 +16,12 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/chzyer/readline"
 	"github.com/fatih/color"
+	"github.com/harshalranjhani/genie/internal/constants"
 	"github.com/harshalranjhani/genie/internal/helpers"
+	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/harshalranjhani/genie/pkg/prompts"
 )
 
@@ -360,4 +365,224 @@ func GenerateBugReportOllama(description, severity, category, assignee, priority
 	}
 
 	return response.Message.Content, nil
+}
+
+func StartOllamaChat(model string) {
+	style := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#9D4EDD"))
+
+	promptStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#06D6A0")).
+		Bold(true)
+
+	aiStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#118AB2"))
+
+	rl, err := readline.New(promptStyle.Render("You 💭 > "))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rl.Close()
+
+	color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
+	fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
+	fmt.Println(style.Render("Type 'clear' to clear chat history."))
+	fmt.Println(style.Render("Type '/history' to export chat history to markdown."))
+	fmt.Println(style.Render("Type '/email' to email chat history."))
+	fmt.Println(strings.Repeat("─", 50))
+
+	messages := []OllamaMessage{
+		{
+			Role:    "system",
+			Content: "You are a helpful assistant.",
+		},
+	}
+
+	for {
+		userInput, err := rl.Readline()
+		if err != nil {
+			break
+		}
+
+		userInput = strings.TrimSpace(userInput)
+
+		switch strings.ToLower(userInput) {
+		case constants.ExitCommand:
+			fmt.Println(style.Render("\n👋 Ending chat session. Goodbye!"))
+			return
+		case constants.ClearCommand:
+			messages = []OllamaMessage{
+				{
+					Role:    "system",
+					Content: "You are a helpful assistant.",
+				},
+			}
+			fmt.Print("\033[H\033[2J")
+			color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
+			fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
+			fmt.Println(style.Render("Type 'clear' to clear chat history."))
+			fmt.Println(style.Render("Type '/history' to export chat history to markdown."))
+			fmt.Println(style.Render("Type '/email' to email chat history."))
+			fmt.Println(strings.Repeat("─", 50))
+			continue
+		case constants.HistoryCommand:
+			exportOllamaChatHistory(messages)
+			continue
+		case constants.EmailCommand:
+			emailOllamaChatHistory(messages)
+			continue
+		}
+
+		messages = append(messages, OllamaMessage{
+			Role:    "user",
+			Content: userInput,
+		})
+
+		s := spinner.New(spinner.CharSets[11], 80*time.Millisecond)
+		s.Prefix = color.HiCyanString("🤔 Thinking: ")
+		s.Suffix = " Please wait..."
+		s.Start()
+
+		requestBody := OllamaRequest{
+			Model:    model,
+			Messages: messages,
+			Stream:   true,
+			Options: map[string]interface{}{
+				"temperature": 0.7,
+			},
+		}
+
+		jsonData, err := json.Marshal(requestBody)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := http.Post("http://localhost:11434/api/chat", "application/json", bytes.NewBuffer(jsonData))
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		s.Stop()
+		fmt.Print(color.HiCyanString("\n🤖 AI: "))
+
+		var fullResponse strings.Builder
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			var streamResponse OllamaResponse
+			if err := json.Unmarshal(scanner.Bytes(), &streamResponse); err != nil {
+				fmt.Printf("\nStream error: %v\n", err)
+				continue
+			}
+
+			content := streamResponse.Message.Content
+			if content != "" {
+				fullResponse.WriteString(content)
+				fmt.Print(aiStyle.Render(content))
+			}
+		}
+
+		messages = append(messages, OllamaMessage{
+			Role:    "assistant",
+			Content: fullResponse.String(),
+		})
+
+		fmt.Println("\n" + strings.Repeat("─", 50))
+	}
+}
+
+func exportOllamaChatHistory(messages []OllamaMessage) {
+	if len(messages) <= 1 {
+		fmt.Printf("%s No chat history available to export.\n", color.RedString("❌"))
+		return
+	}
+
+	s := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("📝 Exporting chat history: ")
+	s.Start()
+
+	timestamp := time.Now().Format("2006-01-02-15-04-05")
+	filename := filepath.Join(".", fmt.Sprintf("chat-history-%s.md", timestamp))
+
+	var content strings.Builder
+	content.WriteString("# Chat History\n\n")
+	content.WriteString(fmt.Sprintf("Generated on: %s\n\n", time.Now().Format("January 2, 2006 15:04:05")))
+	content.WriteString("---\n\n")
+
+	for _, msg := range messages[1:] {
+		switch msg.Role {
+		case "user":
+			content.WriteString(fmt.Sprintf("### 💭 You\n%s\n\n", msg.Content))
+		case "assistant":
+			content.WriteString(fmt.Sprintf("### 🤖 AI\n%s\n\n", msg.Content))
+		}
+		content.WriteString("---\n\n")
+	}
+
+	err := os.WriteFile(filename, []byte(content.String()), 0644)
+	s.Stop()
+
+	if err != nil {
+		fmt.Printf("%s Failed to export chat history: %v\n", color.RedString("❌"), err)
+		return
+	}
+
+	successMsg := fmt.Sprintf("✨ Chat history exported to: %s", filename)
+	fmt.Println(color.GreenString(successMsg))
+}
+
+func emailOllamaChatHistory(messages []OllamaMessage) {
+	if len(messages) <= 1 {
+		fmt.Printf("%s No chat history available to email.\n", color.RedString("❌"))
+		return
+	}
+
+	fmt.Println(strings.Repeat("─", 50))
+	fmt.Println(color.HiMagentaString("📧 Emailing Chat History"))
+	fmt.Println(strings.Repeat("─", 50))
+
+	status, err := middleware.LoadStatus()
+	var email string
+	if err != nil || status == nil || status.Email == "" {
+		fmt.Print(color.YellowString("Please enter your email address: "))
+		fmt.Scanln(&email)
+	} else {
+		email = status.Email
+	}
+
+	s := spinner.New(spinner.CharSets[35], 100*time.Millisecond)
+	s.Prefix = color.HiCyanString("📝 Sending to ") + color.CyanString(email) + color.HiCyanString(": ")
+	s.Start()
+
+	var chatMessages []map[string]string
+	for _, msg := range messages[1:] {
+		chatMessages = append(chatMessages, map[string]string{
+			"role":    msg.Role,
+			"content": msg.Content,
+		})
+	}
+
+	payload := map[string]interface{}{
+		"timestamp": time.Now().Format(time.RFC3339),
+		"model":     "llama2", // You might want to make this configurable
+		"messages":  chatMessages,
+		"metadata": map[string]string{
+			"sessionId": fmt.Sprintf("ollama-%d", time.Now().Unix()),
+			"format":    "markdown",
+		},
+	}
+
+	if err := helpers.SendChatHistoryEmail(email, payload); err != nil {
+		s.Stop()
+		fmt.Printf("\n%s Failed to send chat history: %v\n", color.RedString("❌"), err)
+		fmt.Println(strings.Repeat("─", 50))
+		return
+	}
+
+	s.Stop()
+	fmt.Printf("\n%s Chat history sent successfully to %s!\n",
+		color.GreenString("✨"),
+		color.CyanString(email))
+	fmt.Println(strings.Repeat("─", 50))
 }
