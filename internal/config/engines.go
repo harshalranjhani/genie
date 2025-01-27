@@ -1,5 +1,7 @@
 package config
 
+import "strings"
+
 const (
 	GeminiEngine   = "Gemini"
 	GPTEngine      = "GPT"
@@ -98,6 +100,17 @@ var EngineMap = map[string]Engine{
 func GetEngine(name string) (Engine, bool) {
 	engine, exists := EngineMap[name]
 	return engine, exists
+}
+
+func CheckAndGetEngine(name string) (Engine, bool) {
+	lookupName := strings.ToLower(name)
+
+	for engineName, engine := range EngineMap {
+		if strings.ToLower(engineName) == lookupName {
+			return engine, true
+		}
+	}
+	return Engine{}, false
 }
 
 func GetNextEngine(currentEngine string) string {
