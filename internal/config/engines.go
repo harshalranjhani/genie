@@ -4,6 +4,7 @@ const (
 	GeminiEngine   = "Gemini"
 	GPTEngine      = "GPT"
 	DeepSeekEngine = "DeepSeek"
+	OllamaEngine   = "Ollama"
 )
 
 // Engine represents an AI engine configuration
@@ -77,6 +78,30 @@ var EngineMap = map[string]Engine{
 			SupportsDocumentation: true,
 		},
 	},
+	"Ollama": {
+		Name: "Ollama",
+		Models: []string{
+			"llama2",
+			"llama2:13b",
+			"llama2:70b",
+			"codellama",
+			"mistral",
+			"mixtral",
+			"phi",
+			"neural-chat",
+			"starling-lm",
+			"orca-mini",
+			"vicuna",
+		},
+		DefaultModel: "llama2",
+		Features: EngineFeatures{
+			SupportsImageGen:      false,
+			SupportsChat:          true,
+			SupportsSafeMode:      false,
+			SupportsReasoning:     false,
+			SupportsDocumentation: true,
+		},
+	},
 }
 
 // Helper functions
@@ -92,6 +117,8 @@ func GetNextEngine(currentEngine string) string {
 	case "GPT":
 		return "DeepSeek"
 	case "DeepSeek":
+		return "Ollama"
+	case "Ollama":
 		return "Gemini"
 	default:
 		return "Gemini"

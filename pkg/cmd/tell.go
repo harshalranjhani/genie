@@ -91,6 +91,12 @@ var tellCmd = &cobra.Command{
 				log.Fatal("Error getting response from DeepSeek: ", err)
 				os.Exit(1)
 			}
+		case config.OllamaEngine:
+			err := llm.GetOllamaGeneralResponse(prompt, "llama3.2", includeDir)
+			if err != nil {
+				log.Fatal("Error getting response from Ollama: ", err)
+				os.Exit(1)
+			}
 		}
 	},
 }
