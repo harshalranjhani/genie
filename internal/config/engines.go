@@ -9,7 +9,7 @@ import (
 const (
 	GeminiEngine   = "Gemini"
 	GPTEngine      = "GPT"
-	DeepSeekEngine = "DeepSeek"
+	DeepSeekEngine = "Deepseek"
 	OllamaEngine   = "Ollama"
 )
 
