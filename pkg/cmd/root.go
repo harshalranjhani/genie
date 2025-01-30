@@ -8,7 +8,6 @@ import (
 
 	"github.com/common-nighthawk/go-figure"
 	"github.com/fatih/color"
-	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/spf13/cobra"
 )
 
@@ -16,17 +15,17 @@ var rootCmd = &cobra.Command{
 	Use:   "genie",
 	Short: "genie is an AI powered CLI tool to help you with your daily tasks.",
 	Long:  `genie is an AI powered CLI tool to help you with your daily tasks.`,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// Skip middleware checks for init and reset commands
-		if cmd.Name() == "init" || cmd.Name() == "reset" || cmd.Name() == "completion" {
-			return nil
-		}
+	// PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+	// 	// Skip middleware checks for init and reset commands
+	// 	if cmd.Name() == "init" || cmd.Name() == "reset" || cmd.Name() == "completion" {
+	// 		return nil
+	// 	}
 
-		if err := middleware.CheckKeyringSetup(); err != nil {
-			return err
-		}
-		return nil
-	},
+	// 	if err := middleware.CheckKeyringSetup(); err != nil {
+	// 		return err
+	// 	}
+	// 	return nil
+	// },
 	// Run: func(cmd *cobra.Command, args []string) {
 	// 	// Do Stuff Here
 	// },
