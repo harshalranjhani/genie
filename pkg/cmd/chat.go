@@ -6,6 +6,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/harshalranjhani/genie/internal/config"
 	"github.com/harshalranjhani/genie/internal/helpers/llm"
+	"github.com/harshalranjhani/genie/internal/middleware"
 	"github.com/spf13/cobra"
 	"github.com/zalando/go-keyring"
 )
@@ -16,9 +17,10 @@ func init() {
 }
 
 var chatCmd = &cobra.Command{
-	Use:   "chat",
-	Short: "Start an interactive chat session",
-	Long:  `Start an interactive chat session with the AI model.`,
+	Use:     "chat",
+	Short:   "Start an interactive chat session",
+	Long:    `Start an interactive chat session with the AI model.`,
+	PreRunE: middleware.VerifySubscriptionMiddleware,
 	Run: func(cmd *cobra.Command, args []string) {
 		engineName, err := keyring.Get(serviceName, "engineName")
 		if err != nil {
