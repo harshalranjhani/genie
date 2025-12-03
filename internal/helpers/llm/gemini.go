@@ -2,8 +2,6 @@ package llm
 
 import (
 	"context"
-	_ "embed"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,15 +15,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/chzyer/readline"
 	"github.com/fatih/color"
-	"github.com/google/generative-ai-go/genai"
 	"github.com/harshalranjhani/genie/internal/constants"
 	"github.com/harshalranjhani/genie/internal/helpers"
 	"github.com/harshalranjhani/genie/internal/middleware"
-	"github.com/harshalranjhani/genie/internal/structs"
 	"github.com/harshalranjhani/genie/pkg/prompts"
 	"github.com/joho/godotenv"
 	"github.com/zalando/go-keyring"
-	"google.golang.org/api/option"
+	"google.golang.org/genai"
 )
 
 func GetGeminiCmdResponse(prompt string, safeOn bool) error {
@@ -42,77 +38,67 @@ func GetGeminiCmdResponse(prompt string, safeOn bool) error {
 		fmt.Println("Gemini API key not found in keyring. Please run `genie init` to store the key.")
 		os.Exit(1)
 	}
-	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiKey))
+
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  geminiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
 	if err != nil {
 		s.Stop()
 		return err
 	}
-	defer client.Close()
 
-	// For text-only input, use the gemini-1.5-pro model
-	modelName := "gemini-1.5-pro" // default model
+	modelName := "gemini-2.5-flash" // default model
 	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
 		modelName = selectedModel
 	}
-	model := client.GenerativeModel(modelName)
+
+	config := &genai.GenerateContentConfig{}
 	if safeOn {
-		model.SafetySettings = []*genai.SafetySetting{
+		config.SafetySettings = []*genai.SafetySetting{
 			{
 				Category:  genai.HarmCategoryHarassment,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 			{
 				Category:  genai.HarmCategoryDangerousContent,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 			{
 				Category:  genai.HarmCategorySexuallyExplicit,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 			{
 				Category:  genai.HarmCategoryHateSpeech,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 		}
 	} else {
-		model.SafetySettings = []*genai.SafetySetting{
+		config.SafetySettings = []*genai.SafetySetting{
 			{
 				Category:  genai.HarmCategoryDangerousContent,
-				Threshold: genai.HarmBlockNone,
+				Threshold: genai.HarmBlockThresholdBlockNone,
 			},
 		}
 	}
-	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
-	if err != nil {
-		s.Stop()
-		return err
-	}
-	respJSON, err := json.MarshalIndent(resp, "", "  ")
+
+	resp, err := client.Models.GenerateContent(ctx, modelName, genai.Text(prompt), config)
 	if err != nil {
 		s.Stop()
 		return err
 	}
 
-	// Unmarshal the JSON response into the struct
-	var genResp structs.GenResponse
-	err = json.Unmarshal(respJSON, &genResp)
-	if err != nil {
-		s.Stop()
-		return err
-	}
-
-	if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
-		generatedText := genResp.Candidates[0].Content.Parts[0]
-		// The generatedText is the command to be executed, so we need to run it
-		s.Stop()
-		fmt.Println("Running the command: ", generatedText)
-		helpers.RunCommand(generatedText)
-		return nil
-	} else {
+	generatedText := resp.Text()
+	if generatedText == "" {
 		s.Stop()
 		fmt.Println("No generated text found")
 		return nil
 	}
+
+	s.Stop()
+	fmt.Println("Running the command: ", generatedText)
+	helpers.RunCommand(generatedText)
+	return nil
 }
 
 func GetGeminiGeneralResponse(prompt string, safeOn bool, includeDir bool) (string, error) {
@@ -128,72 +114,64 @@ func GetGeminiGeneralResponse(prompt string, safeOn bool, includeDir bool) (stri
 		s.Stop()
 		return "", fmt.Errorf("gemini API key not found in keyring: please run `genie init` to store the key: %w", err)
 	}
-	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiKey))
+
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  geminiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
 	if err != nil {
 		s.Stop()
 		return "", err
 	}
-	defer client.Close()
 
-	// For text-only input, use the gemini-1.5-pro model
-	modelName := "gemini-1.5-pro" // default model
+	modelName := "gemini-2.5-flash" // default model
 	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
 		modelName = selectedModel
 	}
-	model := client.GenerativeModel(modelName)
+
+	config := &genai.GenerateContentConfig{}
 	if safeOn {
-		model.SafetySettings = []*genai.SafetySetting{
+		config.SafetySettings = []*genai.SafetySetting{
 			{
 				Category:  genai.HarmCategoryHarassment,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 			{
 				Category:  genai.HarmCategoryDangerousContent,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 			{
 				Category:  genai.HarmCategorySexuallyExplicit,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 			{
 				Category:  genai.HarmCategoryHateSpeech,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 		}
 	} else {
-		model.SafetySettings = []*genai.SafetySetting{
+		config.SafetySettings = []*genai.SafetySetting{
 			{
 				Category:  genai.HarmCategoryDangerousContent,
-				Threshold: genai.HarmBlockNone,
+				Threshold: genai.HarmBlockThresholdBlockNone,
 			},
 		}
 	}
-	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
-	if err != nil {
-		s.Stop()
-		return "", err
-	}
-	respJSON, err := json.MarshalIndent(resp, "", "  ")
+
+	resp, err := client.Models.GenerateContent(ctx, modelName, genai.Text(prompt), config)
 	if err != nil {
 		s.Stop()
 		return "", err
 	}
 
-	var genResp structs.GenResponse
-	err = json.Unmarshal(respJSON, &genResp)
-	if err != nil {
-		s.Stop()
-		return "", err
-	}
+	generatedText := resp.Text()
+	s.Stop()
 
-	if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
-		generatedText := genResp.Candidates[0].Content.Parts[0]
-		s.Stop()
-		return generatedText, nil
-	} else {
-		s.Stop()
+	if generatedText == "" {
 		return "No generated text found.", nil
 	}
+
+	return generatedText, nil
 }
 
 func GenerateReadmeWithGemini(readmePath string, templateName string) error {
@@ -228,30 +206,26 @@ func GenerateReadmeWithGemini(readmePath string, templateName string) error {
 	}
 
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiKey))
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  geminiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create Gemini client: %w", err)
 	}
-	defer client.Close()
 
-	modelName := "gemini-1.5-pro" // default model
+	modelName := "gemini-2.5-flash" // default model
 	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
 		modelName = selectedModel
 	}
-	model := client.GenerativeModel(modelName)
-	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
+
+	resp, err := client.Models.GenerateContent(ctx, modelName, genai.Text(prompt), nil)
 	if err != nil {
 		return err
 	}
 
-	var genResp structs.GenResponse
-	respJSON, _ := json.MarshalIndent(resp, "", "  ")
-	if err := json.Unmarshal(respJSON, &genResp); err != nil {
-		return fmt.Errorf("failed to parse Gemini response: %w", err)
-	}
-
-	if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
-		generatedText := genResp.Candidates[0].Content.Parts[0]
+	generatedText := resp.Text()
+	if generatedText != "" {
 		if err := helpers.ProcessTemplateResponse(templateName, generatedText, readmePath); err != nil {
 			return fmt.Errorf("failed to process template response: %w", err)
 		}
@@ -268,36 +242,32 @@ func GenerateBugReportGemini(description, severity, category, assignee, priority
 		return "", fmt.Errorf("gemini API key not found: %w", err)
 	}
 
-	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiKey))
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  geminiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
 	if err != nil {
 		return "", fmt.Errorf("failed to create gemini client: %w", err)
 	}
-	defer client.Close()
 
-	modelName := "gemini-1.5-pro" // default model
+	modelName := "gemini-2.5-flash" // default model
 	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
 		modelName = selectedModel
 	}
-	model := client.GenerativeModel(modelName)
+
 	prompt := prompts.GetBugReportPrompt(description, severity, category, assignee, priority)
 
-	resp, err := model.GenerateContent(ctx, genai.Text(prompt))
+	resp, err := client.Models.GenerateContent(ctx, modelName, genai.Text(prompt), nil)
 	if err != nil {
 		return "", err
 	}
 
-	var genResp structs.GenResponse
-	respJSON, _ := json.MarshalIndent(resp, "", "  ")
-	if err := json.Unmarshal(respJSON, &genResp); err != nil {
-		return "", fmt.Errorf("failed to parse Gemini response: %w", err)
+	generatedText := resp.Text()
+	if generatedText == "" {
+		return "", fmt.Errorf("no response generated")
 	}
 
-	if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
-		generatedText := genResp.Candidates[0].Content.Parts[0]
-		return generatedText, nil
-	}
-
-	return "", fmt.Errorf("no response generated")
+	return generatedText, nil
 }
 
 func StartGeminiChat(safeOn bool) {
@@ -307,52 +277,61 @@ func StartGeminiChat(safeOn bool) {
 		fmt.Println("Gemini API key not found in keyring. Please run `genie init` to store the key.")
 		os.Exit(1)
 	}
-	client, err := genai.NewClient(ctx, option.WithAPIKey(geminiKey))
+
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  geminiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Close()
 
-	modelName := "gemini-1.5-flash" // default model
+	modelName := "gemini-2.5-flash" // default model
 	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
 		modelName = selectedModel
 	}
-	model := client.GenerativeModel(modelName)
-	model.SafetySettings = getSafetySettings(safeOn)
-	cs := model.StartChat()
+
+	config := getSafetyConfig(safeOn)
+	chat, err := client.Chats.Create(ctx, modelName, config, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 	setupChatStyles()
-	startChatSession(ctx, cs, scanner)
+	startChatSession(ctx, chat, scanner)
 }
 
-func getSafetySettings(safeOn bool) []*genai.SafetySetting {
+func getSafetyConfig(safeOn bool) *genai.GenerateContentConfig {
+	config := &genai.GenerateContentConfig{}
 	if safeOn {
-		return []*genai.SafetySetting{
+		config.SafetySettings = []*genai.SafetySetting{
 			{
 				Category:  genai.HarmCategoryHarassment,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 			{
 				Category:  genai.HarmCategoryDangerousContent,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 			{
 				Category:  genai.HarmCategorySexuallyExplicit,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
 			},
 			{
 				Category:  genai.HarmCategoryHateSpeech,
-				Threshold: genai.HarmBlockLowAndAbove,
+				Threshold: genai.HarmBlockThresholdBlockLowAndAbove,
+			},
+		}
+	} else {
+		config.SafetySettings = []*genai.SafetySetting{
+			{
+				Category:  genai.HarmCategoryDangerousContent,
+				Threshold: genai.HarmBlockThresholdBlockNone,
 			},
 		}
 	}
-	return []*genai.SafetySetting{
-		{
-			Category:  genai.HarmCategoryDangerousContent,
-			Threshold: genai.HarmBlockNone,
-		},
-	}
+	return config
 }
 
 var (
@@ -380,7 +359,7 @@ func setupChatStyles() {
 		Italic(true)
 }
 
-func startChatSession(ctx context.Context, cs *genai.ChatSession, scanner *bufio.Scanner) {
+func startChatSession(ctx context.Context, chat *genai.Chat, scanner *bufio.Scanner) {
 	// Configure readline with multiline support
 	config := &readline.Config{
 		Prompt:                 promptStyle.Render("You 💭 > "),
@@ -471,32 +450,32 @@ func startChatSession(ctx context.Context, cs *genai.ChatSession, scanner *bufio
 			fmt.Println(strings.Repeat("─", 50))
 			continue
 		case constants.HistoryCommand:
-			exportGeminiChatHistory(cs.History)
+			exportGeminiChatHistory(chat.History(true))
 			continue
 		case constants.EmailCommand:
-			emailChatHistory(cs.History)
+			emailChatHistory(chat.History(true))
 			continue
 		}
 
-		handleChatMessage(ctx, cs, userInput)
+		handleChatMessage(ctx, chat, userInput)
 	}
 }
 
-func handleChatMessage(ctx context.Context, cs *genai.ChatSession, userInput string) {
+func handleChatMessage(ctx context.Context, chat *genai.Chat, userInput string) {
 	s := spinner.New(spinner.CharSets[11], 80*time.Millisecond)
 	s.Prefix = color.HiCyanString("🤔 Thinking: ")
 	s.Suffix = " Please wait..."
 	s.Start()
 
-	genResp, err := cs.SendMessage(ctx, genai.Text(userInput))
+	genResp, err := chat.SendMessage(ctx, genai.Part{Text: userInput})
 	s.Stop()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if len(genResp.Candidates) > 0 && len(genResp.Candidates[0].Content.Parts) > 0 {
-		response := fmt.Sprintf("%v", genResp.Candidates[0].Content.Parts[0])
+	response := genResp.Text()
+	if response != "" {
 		fmt.Print(color.HiCyanString("\n🤖 AI: "))
 
 		paragraphs := strings.Split(response, "\n")
@@ -528,11 +507,15 @@ func exportGeminiChatHistory(history []*genai.Content) {
 	content.WriteString("---\n\n")
 
 	for _, msg := range history {
+		var text string
+		if len(msg.Parts) > 0 && msg.Parts[0].Text != "" {
+			text = msg.Parts[0].Text
+		}
 		switch msg.Role {
 		case "user":
-			content.WriteString(fmt.Sprintf("### 💭 You\n%v\n\n", msg.Parts[0]))
+			content.WriteString(fmt.Sprintf("### 💭 You\n%s\n\n", text))
 		case "model":
-			content.WriteString(fmt.Sprintf("### 🤖 AI\n%v\n\n", msg.Parts[0]))
+			content.WriteString(fmt.Sprintf("### 🤖 AI\n%s\n\n", text))
 		}
 		content.WriteString("---\n\n")
 	}
@@ -561,7 +544,7 @@ func emailChatHistory(history []*genai.Content) {
 	fmt.Println(strings.Repeat("─", 50))
 
 	// Get current model name
-	modelName := "gemini-1.5-pro"
+	modelName := "gemini-2.5-flash"
 	if selectedModel, err := keyring.Get("genie", "modelName"); err == nil {
 		modelName = selectedModel
 	}
@@ -582,9 +565,13 @@ func emailChatHistory(history []*genai.Content) {
 
 	var messages []map[string]string
 	for _, msg := range history {
+		var text string
+		if len(msg.Parts) > 0 && msg.Parts[0].Text != "" {
+			text = msg.Parts[0].Text
+		}
 		messages = append(messages, map[string]string{
 			"role":    msg.Role,
-			"content": fmt.Sprintf("%v", msg.Parts[0]),
+			"content": text,
 		})
 	}
 

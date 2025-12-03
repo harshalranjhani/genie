@@ -39,17 +39,19 @@ var EngineMap = map[string]structs.Engine{
 	"Gemini": {
 		Name: "Gemini",
 		Models: []string{
-			"gemini-1.5-pro",
-			"gemini-1.5-flash",
-			"gemini-1.5-flash-8b",
+			"gemini-2.5-flash",
+			"gemini-2.5-flash-lite",
+			"gemini-2.5-pro",
+			"gemini-2.0-flash",
+			"gemini-2.0-flash-lite",
 		},
-		DefaultModel: "gemini-1.5-pro",
+		DefaultModel: "gemini-2.5-flash",
 		Features: structs.EngineFeatures{
 			SupportsImageGen:      false,
 			SupportsChat:          true,
 			SupportsSafeMode:      true,
-			SupportsReasoning:     false,
-			SupportsDocumentation: false,
+			SupportsReasoning:     true,
+			SupportsDocumentation: true,
 		},
 	},
 	"DeepSeek": {
