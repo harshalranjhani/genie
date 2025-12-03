@@ -388,17 +388,29 @@ func StartOllamaChat(model string) {
 	aiStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#118AB2"))
 
-	rl, err := readline.New(promptStyle.Render("You 💭 > "))
+	multilineStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#888888")).
+		Italic(true)
+
+	// Configure readline with multiline support
+	config := &readline.Config{
+		Prompt:                 promptStyle.Render("You 💭 > "),
+		HistoryFile:            "/tmp/genie_ollama_history",
+		HistoryLimit:           100,
+		DisableAutoSaveHistory: false,
+		InterruptPrompt:        "^C",
+		EOFPrompt:              "exit",
+		EnableMask:             false,
+	}
+	rl, err := readline.NewEx(config)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rl.Close()
 
 	color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
-	fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
-	fmt.Println(style.Render("Type 'clear' to clear chat history."))
-	fmt.Println(style.Render("Type '/history' to export chat history to markdown."))
-	fmt.Println(style.Render("Type '/email' to email chat history."))
+	fmt.Println(style.Render("Commands: 'exit' | 'clear' | '/history' | '/email'"))
+	fmt.Println(multilineStyle.Render("Tip: For multiline input, type '\\' at end of line or use '---' on a new line to send."))
 	fmt.Println(strings.Repeat("─", 50))
 
 	messages := []OllamaMessage{
@@ -409,12 +421,59 @@ func StartOllamaChat(model string) {
 	}
 
 	for {
-		userInput, err := rl.Readline()
-		if err != nil {
-			break
+		// Read input with multiline support
+		var inputLines []string
+		isMultiline := false
+
+		for {
+			line, err := rl.Readline()
+			if err != nil {
+				if err == readline.ErrInterrupt {
+					if len(inputLines) > 0 {
+						// Cancel current multiline input
+						inputLines = nil
+						isMultiline = false
+						rl.SetPrompt(promptStyle.Render("You 💭 > "))
+						fmt.Println(style.Render("Input cancelled."))
+						break
+					}
+					continue
+				}
+				// EOF or other error - exit chat
+				fmt.Println(style.Render("\n👋 Ending chat session. Goodbye!"))
+				return
+			}
+
+			// Check for line continuation (backslash at end)
+			if strings.HasSuffix(line, "\\") {
+				inputLines = append(inputLines, strings.TrimSuffix(line, "\\"))
+				isMultiline = true
+				rl.SetPrompt(promptStyle.Render("  ... > "))
+				continue
+			}
+
+			// Check for multiline end marker
+			if isMultiline && strings.TrimSpace(line) == "---" {
+				rl.SetPrompt(promptStyle.Render("You 💭 > "))
+				break
+			}
+
+			inputLines = append(inputLines, line)
+
+			// If not in multiline mode, break after first line
+			if !isMultiline {
+				break
+			}
 		}
 
-		userInput = strings.TrimSpace(userInput)
+		if len(inputLines) == 0 {
+			continue
+		}
+
+		userInput := strings.TrimSpace(strings.Join(inputLines, "\n"))
+		if userInput == "" {
+			continue
+		}
 
 		switch strings.ToLower(userInput) {
 		case constants.ExitCommand:
@@ -429,10 +488,8 @@ func StartOllamaChat(model string) {
 			}
 			fmt.Print("\033[H\033[2J")
 			color.New(color.FgHiMagenta).Println("🧞 Chat session started!")
-			fmt.Println(style.Render("Type your message and press Enter to send. Type 'exit' to end the session."))
-			fmt.Println(style.Render("Type 'clear' to clear chat history."))
-			fmt.Println(style.Render("Type '/history' to export chat history to markdown."))
-			fmt.Println(style.Render("Type '/email' to email chat history."))
+			fmt.Println(style.Render("Commands: 'exit' | 'clear' | '/history' | '/email'"))
+			fmt.Println(multilineStyle.Render("Tip: For multiline input, type '\\' at end of line or use '---' on a new line to send."))
 			fmt.Println(strings.Repeat("─", 50))
 			continue
 		case constants.HistoryCommand:
